@@ -1,0 +1,224 @@
+.dashboard-wrapper {
+  width: 100%;
+}
+
+/* Hero Section Styles */
+.dashboard-hero {
+  margin-bottom: 40px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.dashboard-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, #fff, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* The white->light-purple gradient above is tuned for the dark theme and
+   has almost no contrast on the light theme's pale background. Override
+   with a darker gradient (deep slate -> rich violet) that keeps the same
+   accent color family but stays legible on a light surface. */
+[data-theme="light"] .dashboard-hero h1 {
+  background: linear-gradient(90deg, #1b2028, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dashboard-hero p {
+  font-size: 1.1rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* Original Card Grid Styles */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.card {
+  position: relative;
+  border-radius: var(--radius);
+  padding: 22px;
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.015);
+  border-color: var(--accent);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--accent-soft);
+}
+
+.card-status {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 6px var(--signal);
+}
+
+.card h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.card p {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* AI Daily Briefing Box */
+.daily-briefing-box {
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.briefing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+}
+
+.briefing-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.refresh-briefing-btn {
+  font-size: 13px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.briefing-content {
+  min-height: 100px;
+}
+
+.briefing-loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 0;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  text-align: center;
+}
+
+.briefing-loading-spinner .spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spin 1s linear infinite;
+}
+
+.briefing-text {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+}
+
+[data-theme="light"] .briefing-text {
+  color: #1e293b;
+}
+
+[data-theme="light"] .briefing-loading-spinner {
+  color: #64748b;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Skeleton Loading Animations */
+.briefing-loading-spinner-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 37%, rgba(255, 255, 255, 0.05) 63%);
+  background-size: 400% 100%;
+  border-radius: 4px;
+  animation: skeleton-loading 1.4s ease infinite;
+}
+
+[data-theme="light"] .skeleton-line {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 25%, rgba(0, 0, 0, 0.08) 37%, rgba(0, 0, 0, 0.05) 63%);
+  background-size: 400% 100%;
+}
+
+.skeleton-line.title {
+  height: 20px;
+  width: 30%;
+  margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Drag indicator for widgets */
+.draggable-card {
+  cursor: grab;
+}
+
+.draggable-card:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+.card-drag-indicator {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.2);
+  user-select: none;
+  pointer-events: none;
+}

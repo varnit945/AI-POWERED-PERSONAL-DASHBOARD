@@ -1,0 +1,7 @@
+Vibhor Kamboj
+Software Engineer
+Email: vibhor@example.com
+Skills: Python, FastAPI, React, JavaScript, SQL, Git
+Experience:
+- Software Engineer at Tech Corp (2024 - Present): Built dashboards and APIs.
+- Frontend Developer Intern (2023): Restructured React UI components.

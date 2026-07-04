@@ -1,0 +1,173 @@
+.resume-page-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.resume-upload-section {
+  display: flex;
+  padding: 30px;
+  border-radius: 16px;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.select-resume-btn {
+  padding: 12px 24px;
+}
+
+.analyze-resume-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  padding: 12px 24px;
+}
+
+.analyze-resume-btn:hover {
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.resume-error-banner {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  font-size: 14px;
+}
+
+.resume-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 15px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.resume-results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.result-card {
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.result-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+}
+
+.score-card {
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+
+.score-percentage-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 8px solid rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+  background: rgba(0,0,0,0.1);
+}
+
+.score-number {
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.score-number.high {
+  color: #10b981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.score-number.medium {
+  color: #f59e0b;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.score-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 200px;
+  line-height: 1.5;
+}
+
+.skills-tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-tag.badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.skill-tag.missing-badge {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.feedback-card {
+  grid-column: span 2;
+  gap: 20px;
+}
+
+.feedback-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feedback-item h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.feedback-item p {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.6;
+}
+
+.ats-tips-list {
+  padding-left: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ats-tips-list li {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.5;
+}

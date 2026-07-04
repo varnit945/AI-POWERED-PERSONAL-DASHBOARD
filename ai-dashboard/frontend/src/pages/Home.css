@@ -1,0 +1,69 @@
+.home-container {
+  min-height: 100vh;
+  background: #0b0f14;
+  color: white;
+  padding: 60px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 8px 14px;
+  background: rgba(0, 255, 200, 0.1);
+  border: 1px solid rgba(0, 255, 200, 0.3);
+  border-radius: 20px;
+  color: #00ffc8;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.hero h1 span {
+  color: #00ffc8;
+}
+
+.hero p {
+  max-width: 600px;
+  margin: 0 auto 30px;
+  color: #aaa;
+}
+
+.buttons button {
+  margin: 10px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+}
+
+.primary {
+  background: #00ffc8;
+  color: #000;
+  font-weight: bold;
+}
+
+.secondary {
+  background: transparent;
+  border: 1px solid #333;
+  color: white;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.feature-card {
+  background: #121821;
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid #1f2a37;
+}

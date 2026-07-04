@@ -1,0 +1,246 @@
+.docs-page-wrapper {
+  display: flex;
+  height: calc(100vh - 80px);
+  gap: 20px;
+  overflow: hidden;
+}
+
+.docs-list-panel {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
+.docs-list-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-btn {
+  width: 100%;
+}
+
+.docs-error-alert {
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.docs-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 5px;
+}
+
+.doc-list-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  gap: 12px;
+}
+
+.doc-list-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.doc-list-item.active {
+  background: rgba(96, 165, 250, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 15px rgba(96, 165, 250, 0.15);
+}
+
+.doc-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-meta {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.doc-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.doc-date {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.doc-delete-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.doc-list-item:hover .doc-delete-btn {
+  opacity: 1;
+}
+
+.doc-delete-btn:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+/* CHAT PANE */
+.doc-chat-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.doc-chat-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.doc-chat-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.doc-title-highlight {
+  color: var(--primary-color);
+}
+
+.doc-chat-description {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.doc-chat-thread {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding-right: 5px;
+  margin-bottom: 15px;
+}
+
+.doc-chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  font-size: 14px;
+  gap: 20px;
+}
+
+.suggested-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.prompt-chip {
+  padding: 10px 15px;
+  text-align: left;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.prompt-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateX(4px);
+}
+
+.doc-chat-dock {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.doc-chat-input {
+  flex-grow: 1;
+}
+
+.doc-chat-send {
+  padding: 10px 20px;
+}
+
+/* UNSELECTED PANE */
+.doc-chat-unselected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.unselected-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.8;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.doc-chat-unselected h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.doc-chat-unselected p {
+  font-size: 13px;
+  max-width: 320px;
+  line-height: 1.5;
+}

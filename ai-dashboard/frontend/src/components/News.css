@@ -1,0 +1,149 @@
+/* ===============================
+   NEWS PAGE
+================================= */
+
+.news-page {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* Last Updated */
+
+.news-updated {
+  margin: 0 0 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Search */
+
+.news-search {
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+/* News List */
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 20px;
+}
+
+/* News Card */
+
+.news-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-sizing: border-box;
+  transition: all .25s ease;
+}
+
+.news-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 15px 35px rgba(0,0,0,.12);
+}
+
+/* Title */
+
+.news-title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+/* Summary */
+
+.news-summary {
+  margin: 0 0 18px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+/* Footer */
+
+.news-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Source */
+
+.news-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Read More */
+
+.news-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all .2s ease;
+}
+
+.news-link:hover {
+  text-decoration: underline;
+}
+
+/* Empty */
+
+.news-empty {
+  width: 100%;
+  padding: 50px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+  .news-page {
+    padding: 16px;
+  }
+
+  .news-card {
+    padding: 18px;
+  }
+
+  .news-title {
+    font-size: 18px;
+  }
+
+  .news-summary {
+    font-size: 14px;
+  }
+
+  .news-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}

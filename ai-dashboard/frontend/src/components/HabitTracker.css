@@ -1,0 +1,181 @@
+.habits-page-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.habits-input-row {
+  display: flex;
+  padding: 10px 15px;
+  border-radius: 12px;
+  gap: 10px;
+}
+
+.habit-add-input {
+  flex-grow: 1;
+}
+
+.habits-error-banner {
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  font-size: 13px;
+}
+
+.suggested-defaults {
+  padding: 20px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.suggested-defaults h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.defaults-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.default-habit-chip {
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.02);
+}
+
+.default-habit-chip:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+}
+
+.habits-loading, .habits-empty-hint {
+  text-align: center;
+  padding: 40px;
+  color: rgba(255,255,255,0.5);
+  font-size: 14px;
+}
+
+.habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.habit-card {
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.habit-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.habit-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 4px;
+}
+
+.habit-stats-label {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+}
+
+.habit-card-delete {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.habit-card-delete:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.habit-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.habit-day-col {
+  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.habit-day-col:hover {
+  background: rgba(255,255,255,0.03);
+  transform: translateY(-2px);
+}
+
+.day-name {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.day-checkbox-ring {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: transparent;
+  transition: all 0.2s ease;
+}
+
+.habit-day-col.done .day-checkbox-ring {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
+}
+
+.day-number {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+}
+
+.habit-day-col.today {
+  border-color: rgba(96, 165, 250, 0.4);
+  background: rgba(96, 165, 250, 0.04);
+}
+.habit-day-col.today .day-checkbox-ring {
+  border-color: var(--primary-color);
+}

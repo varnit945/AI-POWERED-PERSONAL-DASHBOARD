@@ -1,0 +1,24 @@
+# Dependency directories
+node_modules/
+ai-dashboard/frontend/node_modules/
+ai-dashboard/backend/node_modules/
+
+# Local configuration files
+.env
+.env*.local
+ai-dashboard/frontend/.env
+ai-dashboard/backend/.env
+
+# Python virtual environment
+ai-dashboard/backend/venv/
+__pycache__/
+*.pyc
+
+# Production build outputs
+ai-dashboard/frontend/build/
+
+# Local databases
+*.db
+*.sqlite3
+chat_history.db
+ai-dashboard/backend/chat_history.db

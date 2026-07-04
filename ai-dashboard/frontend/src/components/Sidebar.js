@@ -25,9 +25,16 @@ export default function Sidebar({
   toggleTheme,
   handleLogout,
   user,
+  isOpen,
+  setIsOpen,
 }) {
   return (
-    <div className="sidebar glass">
+    <div className={`sidebar glass ${isOpen ? "open" : ""}`}>
+      {/* Mobile Close Button */}
+      <button className="sidebar-close-btn" onClick={() => setIsOpen(false)}>
+        ✕
+      </button>
+
       <div className="sidebar-brand">
         <span className="brand-dot" />
         AI SaaS

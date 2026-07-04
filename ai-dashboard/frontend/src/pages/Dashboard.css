@@ -222,3 +222,24 @@
   user-select: none;
   pointer-events: none;
 }
+
+/* Dashboard Responsiveness overrides */
+@media (max-width: 768px) {
+  .dashboard-hero {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .dashboard-hero p {
+    font-size: 0.95rem;
+  }
+
+  .daily-briefing-box {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+}

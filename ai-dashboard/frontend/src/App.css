@@ -246,3 +246,96 @@ button, input {
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Mobile Top Bar */
+.mobile-top-bar {
+  display: none;
+  width: 100%;
+  height: 60px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.mobile-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-brand {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Sidebar Backdrop Overlay */
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1002;
+  animation: fade-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+  .app-shell {
+    flex-direction: column;
+    padding-top: 60px; /* Leave space for top bar */
+  }
+
+  .app-container {
+    flex-direction: column;
+    padding-top: 60px;
+  }
+
+  .mobile-top-bar {
+    display: flex;
+  }
+
+  .main-content {
+    padding: 20px 16px;
+    height: calc(100vh - 60px);
+  }
+
+  /* Global Grid/Flex stack overrides on mobile */
+  .dash-grid, 
+  .widgets-grid, 
+  .code-assistant-grid, 
+  .study-hub-grid, 
+  .interview-grid,
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Force elements that have flex layouts to stack vertically */
+  .flex-responsive {
+    flex-direction: column !important;
+  }
+}

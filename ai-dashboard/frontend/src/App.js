@@ -85,6 +85,7 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [taskLists, setTaskLists] = useState([]);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // ---------------- Pomodoro Global Background Timer State ----------------
   const [pomoMode, setPomoMode] = useState("focus");
@@ -247,18 +248,40 @@ export default function App() {
 
   
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isSidebarOpen ? "sidebar-open" : ""}`}>
       {theme === "dark" && <StarfieldBackground />}
       <SparkleTrailCursor />
 
-    <Sidebar
-      page={page}
-      setPage={setPage}
-      theme={theme}
-      toggleTheme={toggleTheme}
-      handleLogout={handleLogout}
-      user={user}
-    />
+      {/* Mobile Top Bar */}
+      <div className="mobile-top-bar glass">
+        <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
+          ☰
+        </button>
+        <div className="mobile-brand">AI SaaS</div>
+        <div style={{ width: "32px" }} />
+      </div>
+
+      {/* Sidebar Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)} />
+      )}
+
+      <Sidebar
+        page={page}
+        setPage={(newPage) => {
+          setPage(newPage);
+          setIsSidebarOpen(false);
+        }}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        handleLogout={() => {
+          handleLogout();
+          setIsSidebarOpen(false);
+        }}
+        user={user}
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+      />
 
     <div className="main-content">
       <div className="page-transition" key={page}>

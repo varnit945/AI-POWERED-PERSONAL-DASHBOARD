@@ -126,3 +126,46 @@
 .theme-toggle-thumb.light {
   transform: translateX(14px);
 }
+
+/* Mobile close button (hidden on desktop) */
+.sidebar-close-btn {
+  display: none;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 1010;
+}
+
+/* Sidebar Responsive Overrides */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    height: 100vh;
+    z-index: 1005;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    background: var(--surface-solid); /* Use solid color to overlay content */
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: block;
+  }
+  
+  .nav-btn.active::before {
+    left: -16px;
+  }
+}

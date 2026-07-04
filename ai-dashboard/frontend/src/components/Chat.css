@@ -668,3 +668,25 @@
     border-radius: 2px;
   }
 }
+
+/* Chat Responsiveness overrides */
+@media (max-width: 768px) {
+  .chat-page-wrapper {
+    flex-direction: column;
+    height: auto;
+    gap: 12px;
+  }
+
+  .chat-history-panel {
+    width: 100%;
+    max-height: 160px;
+  }
+
+  .chat-history-panel .history-list {
+    max-height: 100px;
+  }
+
+  .chat-container {
+    height: 450px !important;
+  }
+}

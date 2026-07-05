@@ -187,6 +187,7 @@ export default function App() {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pomoIsRunning, pomoMode, pomoCustomFocus, pomoCustomBreak]);
 
   const handleLogout = () => {

@@ -51,6 +51,7 @@ const Dashboard = ({ messages = [], taskLists = [], setPage, user, pomoMode, pom
     if (user) {
       loadWidgetOrder();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchDashboardBriefing = async () => {

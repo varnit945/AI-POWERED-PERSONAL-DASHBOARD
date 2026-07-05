@@ -24,6 +24,7 @@ export default function Notes() {
 
   useEffect(() => {
     loadNotes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadNotes = async () => {

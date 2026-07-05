@@ -10,6 +10,7 @@ export default function Tasks({ taskLists, setTaskLists }) {
 
   useEffect(() => {
     loadTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadTasks = async () => {

@@ -18,6 +18,33 @@
   --font-mono: 'IBM Plex Mono', monospace;
   --blur: blur(18px);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+
+  /* Sidebar Sizing Variables */
+  --sidebar-width: 230px;
+  --sidebar-font-size: 14.5px;
+  --sidebar-brand-size: 18px;
+  --sidebar-padding: 24px 16px;
+}
+
+[data-sidebar-size="small"] {
+  --sidebar-width: 195px;
+  --sidebar-font-size: 13px;
+  --sidebar-brand-size: 15px;
+  --sidebar-padding: 16px 12px;
+}
+
+[data-sidebar-size="medium"] {
+  --sidebar-width: 230px;
+  --sidebar-font-size: 14.5px;
+  --sidebar-brand-size: 18px;
+  --sidebar-padding: 24px 16px;
+}
+
+[data-sidebar-size="large"] {
+  --sidebar-width: 265px;
+  --sidebar-font-size: 16px;
+  --sidebar-brand-size: 21px;
+  --sidebar-padding: 30px 20px;
 }
 
 [data-theme="light"] {

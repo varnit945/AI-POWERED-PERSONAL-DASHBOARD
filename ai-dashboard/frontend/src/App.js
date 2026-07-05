@@ -217,6 +217,11 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
+    const savedSize = localStorage.getItem("sidebar-size") || "medium";
+    document.documentElement.setAttribute("data-sidebar-size", savedSize);
+  }, []);
+
+  useEffect(() => {
     const handleGlobalKeys = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();

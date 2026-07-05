@@ -9,6 +9,9 @@ venv/
 **/venv/
 ai-dashboard/backend/venv/
 
+# Exclude pip --target local deps folder
+deps/
+
 # Exclude large local build and DB outputs
 ai-dashboard/frontend/build/
 .git/

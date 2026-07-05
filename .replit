@@ -1,5 +1,5 @@
-run = "python3 -m pip install --user -r requirements.txt && python3 main.py"
+run = "PYTHONPATH=./deps python3 main.py"
 
 [deployment]
-run = "python3 -m pip install --user -r requirements.txt && python3 main.py"
-build = ""
+build = "pip install --target=./deps -r requirements.txt"
+run = "PYTHONPATH=./deps python3 main.py"

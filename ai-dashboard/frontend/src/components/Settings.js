@@ -14,7 +14,6 @@ const AVAILABLE_MODELS = [
 export default function Settings() {
   const [model, setModel] = useState("llama-3.1-8b-instant");
   const [city, setCity] = useState("Mumbai");
-  const [sidebarSize, setSidebarSize] = useState("medium");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -31,11 +30,6 @@ export default function Settings() {
       if (res.data) {
         if (res.data.preferred_model) setModel(res.data.preferred_model);
         if (res.data.favorite_city) setCity(res.data.favorite_city);
-        if (res.data.font_size) {
-          setSidebarSize(res.data.font_size);
-          localStorage.setItem("sidebar-size", res.data.font_size);
-          document.documentElement.setAttribute("data-sidebar-size", res.data.font_size);
-        }
       }
     } catch (err) {
       console.error("Failed to load settings", err);
@@ -52,10 +46,7 @@ export default function Settings() {
       await axios.post(`${API}/user/settings`, {
         preferred_model: model,
         favorite_city: city,
-        font_size: sidebarSize,
       });
-      localStorage.setItem("sidebar-size", sidebarSize);
-      document.documentElement.setAttribute("data-sidebar-size", sidebarSize);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -95,21 +86,6 @@ export default function Settings() {
                     {m.name}
                   </option>
                 ))}
-              </select>
-            </div>
-            <div className="settings-item">
-              <label>Sidebar & Text Sizing</label>
-              <p className="settings-item-desc">
-                Adjust the size of the sidebar navigation panel and main font scale for laptops and desktop monitors.
-              </p>
-              <select
-                className="notes-select settings-select"
-                value={sidebarSize}
-                onChange={(e) => setSidebarSize(e.target.value)}
-              >
-                <option value="small">Small Sizing (Compact Layout)</option>
-                <option value="medium">Medium Sizing (Standard Layout)</option>
-                <option value="large">Large Sizing (Spacious Layout)</option>
               </select>
             </div>
             <div className="settings-item">

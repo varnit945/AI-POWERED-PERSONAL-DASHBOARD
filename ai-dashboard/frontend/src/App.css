@@ -26,27 +26,6 @@
   --sidebar-padding: 24px 16px;
 }
 
-[data-sidebar-size="small"] {
-  --sidebar-width: 195px;
-  --sidebar-font-size: 13px;
-  --sidebar-brand-size: 15px;
-  --sidebar-padding: 16px 12px;
-}
-
-[data-sidebar-size="medium"] {
-  --sidebar-width: 230px;
-  --sidebar-font-size: 14.5px;
-  --sidebar-brand-size: 18px;
-  --sidebar-padding: 24px 16px;
-}
-
-[data-sidebar-size="large"] {
-  --sidebar-width: 265px;
-  --sidebar-font-size: 16px;
-  --sidebar-brand-size: 21px;
-  --sidebar-padding: 30px 20px;
-}
-
 [data-theme="light"] {
   --bg: #eef0f4;
   --surface: rgba(255, 255, 255, 0.55);
@@ -365,32 +344,5 @@ button, input {
   /* Force elements that have flex layouts to stack vertically */
   .flex-responsive {
     flex-direction: column !important;
-  }
-}
-
-/* Sizing overrides for main content (ALL INSIDE elements) */
-[data-sidebar-size="small"] .main-content {
-  zoom: 0.9;
-}
-
-[data-sidebar-size="medium"] .main-content {
-  zoom: 1;
-}
-
-[data-sidebar-size="large"] .main-content {
-  zoom: 1.08; /* 1.08 is perfect to scale spacious layout without causing overflow squishing */
-}
-
-/* Firefox Zoom Fallbacks */
-@-moz-document url-prefix() {
-  [data-sidebar-size="small"] .main-content {
-    width: 111.11%;
-    transform: scale(0.9);
-    transform-origin: top left;
-  }
-  [data-sidebar-size="large"] .main-content {
-    width: 92.5%;
-    transform: scale(1.08);
-    transform-origin: top left;
   }
 }

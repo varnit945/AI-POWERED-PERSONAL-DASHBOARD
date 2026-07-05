@@ -2,5 +2,6 @@ run = "python3 main.py"
 
 [deployment]
 run = "python3 main.py"
-build = "echo 'No build step required'"
+build = "pip install -r requirements.txt"
+
 

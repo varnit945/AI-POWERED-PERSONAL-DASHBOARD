@@ -22,21 +22,26 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
   const [fpError, setFpError] = useState("");
   
   // Public community metrics state
-  const [stats, setStats] = useState({ total_users: 1, online_users: 1 });
+  const [stats, setStats] = useState(null);
+  const [statsError, setStatsError] = useState(false);
 
   React.useEffect(() => {
     const fetchStats = async () => {
       try {
         const res = await axios.get(`${API}/public/stats`);
-        if (res.data) {
+        if (res.data && !res.data.error) {
           setStats(res.data);
+          setStatsError(false);
+        } else if (res.data.error) {
+          setStatsError(true);
         }
       } catch (err) {
+        setStatsError(true);
         console.error("Failed to load public stats", err);
       }
     };
     fetchStats();
-    const interval = setInterval(fetchStats, 30000);
+    const interval = setInterval(fetchStats, 15000); // poll every 15s for live feel
     return () => clearInterval(interval);
   }, []);
 
@@ -162,7 +167,10 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
             Don't have an account? <button className="auth-link-inline" onClick={switchToRegister}>Register</button>
           </p>
           <div style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)", textAlign: "center" }}>
-            👥 {stats.total_users} members registered · 🟢 {stats.online_users} online now
+            {statsError || !stats
+              ? <span style={{ color: "#f87171" }}>⚠️ Server offline — stats unavailable</span>
+              : <>👥 {stats.total_users} members registered · 🟢 {stats.online_users} online now</>
+            }
           </div>
         </div>
       </div>

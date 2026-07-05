@@ -1,5 +1,5 @@
 run = "PYTHONPATH=./deps python3 main.py"
 
 [deployment]
-build = "pip install --target=./deps -r requirements.txt"
+build = "pip install --upgrade pip && pip install --target=./deps -r requirements.txt"
 run = "PYTHONPATH=./deps python3 main.py"

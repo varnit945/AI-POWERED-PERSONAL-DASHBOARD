@@ -12,6 +12,25 @@ export default function Register({ onRegisterSuccess, switchToLogin }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Public community metrics state
+  const [stats, setStats] = useState({ total_users: 1, online_users: 1 });
+
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`${API}/public/stats`);
+        if (res.data) {
+          setStats(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to load public stats", err);
+      }
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
@@ -102,6 +121,9 @@ export default function Register({ onRegisterSuccess, switchToLogin }) {
             Log In
           </button>
         </p>
+        <div style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)", textAlign: "center" }}>
+          👥 {stats.total_users} members registered · 🟢 {stats.online_users} online now
+        </div>
       </div>
     </div>
   );

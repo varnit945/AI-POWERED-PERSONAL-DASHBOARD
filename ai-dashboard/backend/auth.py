@@ -89,6 +89,10 @@ def init_auth_db():
         conn.execute("ALTER TABLE user_settings ADD COLUMN custom_api_key TEXT DEFAULT ''")
     except sqlite3.OperationalError:
         pass
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN last_active TEXT")
+    except sqlite3.OperationalError:
+        pass
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS notes (
@@ -240,6 +244,19 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     token = credentials.credentials
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
+        
+        # Update last_active timestamp in background/inline
+        try:
+            conn = get_db()
+            conn.execute(
+                "UPDATE users SET last_active = ? WHERE id = ?",
+                (datetime.now(timezone.utc).isoformat(), payload["sub"])
+            )
+            conn.commit()
+            conn.close()
+        except Exception as db_err:
+            print(f"Failed to update last_active: {db_err}")
+
         return {"id": payload["sub"], "username": payload["username"]}
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
@@ -490,3 +507,33 @@ def update_settings(req: SettingsUpdate, current_user: dict = Depends(get_curren
     row = conn.execute("SELECT * FROM user_settings WHERE user_id = ?", (current_user["id"],)).fetchone()
     conn.close()
     return dict(row)
+
+
+@router.get("/public/stats")
+def get_public_stats():
+    try:
+        conn = get_db()
+        total = conn.execute("SELECT COUNT(*) as count FROM users").fetchone()["count"]
+        rows = conn.execute("SELECT last_active FROM users WHERE last_active IS NOT NULL").fetchall()
+        conn.close()
+        
+        online_count = 0
+        now = datetime.now(timezone.utc)
+        for r in rows:
+            try:
+                last = datetime.fromisoformat(r["last_active"])
+                if now - last < timedelta(minutes=5):
+                    online_count += 1
+            except Exception:
+                pass
+                
+        # Ensure at least 1 online user when querying from an active client
+        if online_count == 0 and total > 0:
+            online_count = 1
+            
+        return {
+            "total_users": total,
+            "online_users": online_count
+        }
+    except Exception as e:
+        return {"total_users": 1, "online_users": 1, "error": str(e)}

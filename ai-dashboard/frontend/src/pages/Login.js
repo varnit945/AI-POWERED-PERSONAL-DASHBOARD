@@ -20,6 +20,25 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
   const [fpStep, setFpStep] = useState("request"); // "request" | "reset"
   const [fpMessage, setFpMessage] = useState("");
   const [fpError, setFpError] = useState("");
+  
+  // Public community metrics state
+  const [stats, setStats] = useState({ total_users: 1, online_users: 1 });
+
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`${API}/public/stats`);
+        if (res.data) {
+          setStats(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to load public stats", err);
+      }
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -142,6 +161,9 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
           <p className="auth-switch">
             Don't have an account? <button className="auth-link-inline" onClick={switchToRegister}>Register</button>
           </p>
+          <div style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)", textAlign: "center" }}>
+            👥 {stats.total_users} members registered · 🟢 {stats.online_users} online now
+          </div>
         </div>
       </div>
     </>

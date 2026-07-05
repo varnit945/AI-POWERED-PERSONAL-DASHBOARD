@@ -1,0 +1,18 @@
+# Exclude heavy dependency folders
+node_modules/
+**/node_modules/
+ai-dashboard/frontend/node_modules/
+ai-dashboard/backend/node_modules/
+
+# Exclude virtual environments
+venv/
+**/venv/
+ai-dashboard/backend/venv/
+
+# Exclude large local build and DB outputs
+ai-dashboard/frontend/build/
+.git/
+*.db
+*.sqlite3
+chat_history.db
+ai-dashboard/backend/chat_history.db

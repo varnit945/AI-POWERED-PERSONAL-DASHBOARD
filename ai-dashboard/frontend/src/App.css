@@ -367,3 +367,30 @@ button, input {
     flex-direction: column !important;
   }
 }
+
+/* Sizing overrides for main content (ALL INSIDE elements) */
+[data-sidebar-size="small"] .main-content {
+  zoom: 0.9;
+}
+
+[data-sidebar-size="medium"] .main-content {
+  zoom: 1;
+}
+
+[data-sidebar-size="large"] .main-content {
+  zoom: 1.08; /* 1.08 is perfect to scale spacious layout without causing overflow squishing */
+}
+
+/* Firefox Zoom Fallbacks */
+@-moz-document url-prefix() {
+  [data-sidebar-size="small"] .main-content {
+    width: 111.11%;
+    transform: scale(0.9);
+    transform-origin: top left;
+  }
+  [data-sidebar-size="large"] .main-content {
+    width: 92.5%;
+    transform: scale(1.08);
+    transform-origin: top left;
+  }
+}

@@ -95,8 +95,10 @@ export default function App() {
   const [pomoCustomBreak, setPomoCustomBreak] = useState(5);
 
   useEffect(() => {
-    if (Notification.permission === "default") {
-      Notification.requestPermission();
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
     }
   }, []);
 
@@ -138,7 +140,7 @@ export default function App() {
     setPomoIsRunning(false);
     playAlarmSound();
     
-    if (Notification.permission === "granted") {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
       new Notification(
         pomoMode === "focus" ? "💪 Focus Session Finished!" : "☕ Break Over!",
         {

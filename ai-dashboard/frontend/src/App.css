@@ -296,6 +296,7 @@ button, input {
   -webkit-backdrop-filter: blur(4px);
   z-index: 1002;
   animation: fade-in 0.2s ease;
+  cursor: pointer; /* Crucial for iOS click/touch events on passive divs */
 }
 
 @keyframes fade-in {

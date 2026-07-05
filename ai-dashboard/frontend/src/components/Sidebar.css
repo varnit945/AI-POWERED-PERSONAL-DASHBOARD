@@ -131,14 +131,25 @@
 .sidebar-close-btn {
   display: none;
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 20px;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 16px;
   cursor: pointer;
-  z-index: 1010;
+  z-index: 1015;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.sidebar-close-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 /* Sidebar Responsive Overrides */
@@ -162,7 +173,7 @@
   }
 
   .sidebar-close-btn {
-    display: block;
+    display: flex !important;
   }
   
   .nav-btn.active::before {

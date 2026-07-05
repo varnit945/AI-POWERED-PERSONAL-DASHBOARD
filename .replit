@@ -1,2 +1,6 @@
 run = "python main.py"
 
+[deployment]
+run = "python main.py"
+build = "echo 'No build step required'"
+

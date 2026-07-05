@@ -150,46 +150,6 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Community Stats Card */}
-        <div className="settings-card glass" style={{ marginTop: "24px" }}>
-          <h3>📊 Platform Analytics</h3>
-          <p className="settings-item-desc" style={{ marginBottom: "16px" }}>
-            Real-time dashboard utilization metrics and total registered community members.
-          </p>
-          <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
-            <div style={{
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid var(--border)",
-              padding: "16px 20px",
-              borderRadius: "12px",
-              minWidth: "160px",
-              flex: 1
-            }}>
-              <div style={{ fontSize: "28px", fontWeight: "700", color: "var(--accent)" }}>
-                {stats.total_users}
-              </div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
-                Total Registered Members
-              </div>
-            </div>
-            
-            <div style={{
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid var(--border)",
-              padding: "16px 20px",
-              borderRadius: "12px",
-              minWidth: "160px",
-              flex: 1
-            }}>
-              <div style={{ fontSize: "28px", fontWeight: "700", color: "var(--signal)" }}>
-                🟢 {stats.online_users}
-              </div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
-                Active Users Online
-              </div>
-            </div>
-          </div>
-        </div>
         </>
       )}
     </div>

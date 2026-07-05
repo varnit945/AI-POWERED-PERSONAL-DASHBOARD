@@ -3,7 +3,7 @@ import axios from "axios";
 import "./Login.css";
 import BackgroundAnimation from "../components/BackgroundAnimation";
 
-const API = "http://127.0.0.1:8000";
+import API from "../config";
 
 export default function Login({ onLoginSuccess, switchToRegister }) {
   // Core login state

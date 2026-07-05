@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./Chat.css";
 
-const API = "http://127.0.0.1:8000";
+import API from "../config";
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 

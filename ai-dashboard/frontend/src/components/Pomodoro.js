@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./Pomodoro.css";
 
-const API = "http://127.0.0.1:8000";
+import API from "../config";
 
 export default function Pomodoro({
   mode,

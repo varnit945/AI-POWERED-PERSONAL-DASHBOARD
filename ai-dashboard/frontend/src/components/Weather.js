@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
 import "./Weather.css";
+import API from "../config";
 
 const iconFor = (condition = "") => {
   const c = condition.toLowerCase();
@@ -35,8 +36,8 @@ export default function Weather() {
 
     try {
       const [weatherRes, forecastRes] = await Promise.all([
-        axios.get(`http://127.0.0.1:8000/weather/${city}`),
-        axios.get(`http://127.0.0.1:8000/weather/forecast/${city}`)
+        axios.get(`${API}/weather/${city}`),
+        axios.get(`${API}/weather/forecast/${city}`)
       ]);
 
       if (thisRequest !== requestId.current) return;

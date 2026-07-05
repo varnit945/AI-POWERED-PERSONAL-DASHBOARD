@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./Login.css";
 
-const API = "http://127.0.0.1:8000";
+import API from "../config";
 
 export default function Register({ onRegisterSuccess, switchToLogin }) {
   const [username, setUsername] = useState("");

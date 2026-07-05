@@ -3,7 +3,7 @@ import axios from "axios";
 import "./Dashboard.css";
 import { detectLocation } from "../utils/geo";
 
-const API = "http://127.0.0.1:8000";
+import API from "../config";
 
 const DraggableCard = ({ title, desc, icon, onClick, onDragStart, onDragOver, onDrop }) => {
   return (

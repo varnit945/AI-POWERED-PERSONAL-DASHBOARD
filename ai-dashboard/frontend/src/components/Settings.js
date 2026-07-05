@@ -3,7 +3,7 @@ import axios from "axios";
 import "./Settings.css";
 import { detectLocation } from "../utils/geo";
 
-const API = "http://127.0.0.1:8000";
+import API from "../config";
 
 const AVAILABLE_MODELS = [
   { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Instant & Extremely Fast)" },

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./News.css";
+import API from "../config";
 
 export default function News() {
   const [news, setNews] = useState([]);
@@ -13,7 +14,7 @@ export default function News() {
 
   const loadNews = async () => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/trending-india-news");
+      const res = await axios.get(`${API}/trending-india-news`);
       setNews(res.data.articles || []);
       setUpdatedAt(new Date());
     } catch (err) {

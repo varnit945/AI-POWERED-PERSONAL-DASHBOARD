@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import "./StudyHub.css";
 
-const API = "http://127.0.0.1:8000";
+import API from "../config";
 
 export default function StudyHub() {
   const [topic, setTopic] = useState("");

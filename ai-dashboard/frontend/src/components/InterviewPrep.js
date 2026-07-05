@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./InterviewPrep.css";
 
-const API = "http://127.0.0.1:8000";
+import API from "../config";
 
 const CATEGORIES = ["Frontend", "Backend", "Python", "Java", "React", "AI", "HR"];
 const DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"];

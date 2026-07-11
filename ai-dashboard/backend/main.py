@@ -35,7 +35,7 @@ app.add_middleware(
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-client = Groq(api_key=GROQ_API_KEY)
+client = Groq(api_key=GROQ_API_KEY or "dummy_key_to_prevent_startup_crash")
 
 # ---------------- CACHING ----------------
 WEATHER_CACHE_DURATION = 600  # 10 minutes

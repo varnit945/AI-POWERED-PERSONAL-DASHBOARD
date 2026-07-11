@@ -1,5 +1,5 @@
 run = "PYTHONPATH=./deps python3 ai-dashboard/backend/main.py"
 
 [deployment]
-build = "python3 -m pip install --target=./deps -r ai-dashboard/backend/requirements.txt"
+build = "python3 -m pip install setuptools --target=./deps && python3 -m pip install --target=./deps -r ai-dashboard/backend/requirements.txt"
 run = "PYTHONPATH=./deps python3 ai-dashboard/backend/main.py"

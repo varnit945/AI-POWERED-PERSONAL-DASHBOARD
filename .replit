@@ -1,4 +1,6 @@
-run = "pip install -r requirements.txt && cd ai-dashboard/backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8080"
+build = "pip install -r requirements.txt"
+run = "cd ai-dashboard/backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8080"
 
 [deployment]
-run = "pip install -r requirements.txt && cd ai-dashboard/backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8080"
+build = "pip install -r requirements.txt"
+run = "cd ai-dashboard/backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8080"

@@ -1,1 +1,4 @@
 run = "python3 ai-dashboard/backend/main.py"
+
+[deployment]
+run = "python3 ai-dashboard/backend/main.py"

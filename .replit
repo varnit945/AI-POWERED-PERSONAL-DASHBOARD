@@ -1,4 +1,4 @@
-run = "python3 ai-dashboard/backend/main.py"
+run = "cd ai-dashboard/backend && uvicorn main:app --host 0.0.0.0 --port 8080"
 
 [deployment]
-run = "python3 ai-dashboard/backend/main.py"
+run = "cd ai-dashboard/backend && uvicorn main:app --host 0.0.0.0 --port 8080"

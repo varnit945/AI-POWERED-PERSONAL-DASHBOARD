@@ -1,15 +1,20 @@
 .chat-page-wrapper {
   display: flex;
-  height: calc(100vh - 100px);
+  /* Fill the exact height the parent (main-content) gives us */
+  height: 100%;
+  min-height: 0;
   gap: 16px;
+  overflow: hidden;
 }
 
 .chat-history-panel {
   width: 220px;
+  min-width: 0;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow: hidden;
 }
 
 .new-chat-btn {
@@ -104,7 +109,10 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 100px);
+  /* Fill parent height — no fixed calc() so it works at any window size */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .page-header {
@@ -669,43 +677,44 @@
   }
 }
 
-/* Chat Responsiveness overrides */
-@media (max-width: 768px) {
-  .chat-page-wrapper {
-    flex-direction: column;
-    height: calc(100vh - 120px) !important;
-    gap: 12px;
-  }
+/* ── Responsive: half-screen / narrow windows ── */
 
+/* Hide history panel to save space on medium windows (e.g. half of 1080p) */
+@media (max-width: 900px) {
   .chat-history-panel {
-    width: 100%;
-    max-height: 140px;
-    flex-shrink: 0;
+    display: none;
   }
 
-  .chat-history-panel .history-list {
-    max-height: 80px;
-  }
-
-  .chat-page {
-    flex: 1;
-    height: auto !important;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .chat-thread {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-  }
-
-  .chat-dock {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    background: var(--bg);
-    z-index: 10;
+  .chat-page-wrapper {
+    gap: 0;
   }
 }
+
+/* On very narrow viewports let bubbles use more width */
+@media (max-width: 600px) {
+  .chat-bubble {
+    max-width: 95%;
+  }
+
+  .chat-input-row .btn-primary {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .page-header {
+    font-size: 22px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chat-voice-header-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .voice-header-select,
+  .voice-header-toggle {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+}

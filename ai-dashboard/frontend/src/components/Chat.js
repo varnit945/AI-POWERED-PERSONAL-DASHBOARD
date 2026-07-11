@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./Chat.css";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -304,11 +304,7 @@ export default function Chat({ messages, setMessages }) {
     if (attachedFile?.readable && attachedFile.content) {
       promptForAI = `${typed ? typed + "\n\n" : ""}Attached file "${attachedFile.name}":\n\n${attachedFile.content}`;
     } else if (attachedFile && !attachedFile.readable) {
-      if (attachedFile.isImage) {
-        promptForAI = `${typed ? typed + "\n\n" : ""}[User attached an image named "${attachedFile.name}" and asked: "${typed}"]`;
-      } else {
-        promptForAI = `${typed ? typed + "\n\n" : ""}[User attached a file named "${attachedFile.name}" that could not be read as text — ask them to describe its contents if needed.]`;
-      }
+      promptForAI = `${typed ? typed + "\n\n" : ""}[User attached a file named "${attachedFile.name}" that could not be read as text — ask them to describe its contents if needed.]`;
     }
 
     // Build what shows in the chat bubble
@@ -316,14 +312,9 @@ export default function Chat({ messages, setMessages }) {
       ? `${typed}${typed ? "\n\n" : ""}📎 ${attachedFile.name}`
       : typed;
 
-    const msgObj = { role: "user", text: displayText };
-    if (attachedFile?.isImage && attachedFile.dataUrl) {
-      msgObj.imageUrl = attachedFile.dataUrl;
-    }
-
     setInput("");
     setAttachedFile(null);
-    setMessages((prev) => [...prev, msgObj]);
+    setMessages((prev) => [...prev, { role: "user", text: displayText }]);
     setLoading(true);
 
     try {
@@ -416,24 +407,7 @@ export default function Chat({ messages, setMessages }) {
 
   const readFile = (file) => {
     return new Promise((resolve) => {
-      const isImage = file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name);
-      if (isImage) {
-        const reader = new FileReader();
-        reader.onload = () =>
-          resolve({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            content: null,
-            readable: false,
-            isImage: true,
-            dataUrl: reader.result,
-            loading: false
-          });
-        reader.onerror = () =>
-          resolve({ name: file.name, type: file.type, size: file.size, content: null, readable: false });
-        reader.readAsDataURL(file);
-      } else if (TEXT_LIKE.test(file.name)) {
+      if (TEXT_LIKE.test(file.name)) {
         const reader = new FileReader();
         reader.onload = () =>
           resolve({ name: file.name, type: file.type, size: file.size, content: reader.result, readable: true });
@@ -449,13 +423,6 @@ export default function Chat({ messages, setMessages }) {
   const attachFile = async (file) => {
     if (!file) return;
     setAttachedFile({ name: file.name, loading: true });
-    
-    const isImage = file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name);
-    if (isImage) {
-      const parsed = await readFile(file);
-      setAttachedFile(parsed);
-      return;
-    }
     
     try {
       const formData = new FormData();
@@ -614,32 +581,10 @@ export default function Chat({ messages, setMessages }) {
           );
         }
       } catch (e) {
-        // Fall back
+        // Fall back to plain text
       }
     }
-    
-    const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
-    const match = imgRegex.exec(m.text);
-    if (match) {
-      const alt = match[1];
-      const url = match[2];
-      const textWithoutImg = m.text.replace(imgRegex, '').trim();
-      return (
-        <div>
-          {textWithoutImg && <p className="chat-bubble-text" style={{ marginBottom: "8px" }}>{textWithoutImg}</p>}
-          <img src={url} alt={alt} style={{ maxWidth: "100%", maxHeight: "300px", borderRadius: "8px", border: "1px solid var(--border)", display: "block" }} />
-        </div>
-      );
-    }
-
-    return (
-      <div>
-        <p className="chat-bubble-text">{m.text}</p>
-        {m.imageUrl && (
-          <img src={m.imageUrl} alt="Uploaded attachment" style={{ maxWidth: "100%", maxHeight: "300px", borderRadius: "8px", border: "1px solid var(--border)", marginTop: "10px", display: "block" }} />
-        )}
-      </div>
-    );
+    return <p className="chat-bubble-text">{m.text}</p>;
   };
 
 

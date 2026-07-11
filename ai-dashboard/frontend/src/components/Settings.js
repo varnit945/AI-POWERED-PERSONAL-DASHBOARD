@@ -3,7 +3,7 @@ import axios from "axios";
 import "./Settings.css";
 import { detectLocation } from "../utils/geo";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 const AVAILABLE_MODELS = [
   { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Instant & Extremely Fast)" },
@@ -14,7 +14,6 @@ const AVAILABLE_MODELS = [
 export default function Settings() {
   const [model, setModel] = useState("llama-3.1-8b-instant");
   const [city, setCity] = useState("Mumbai");
-  const [stats, setStats] = useState({ total_users: 1, online_users: 1 });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -31,10 +30,6 @@ export default function Settings() {
       if (res.data) {
         if (res.data.preferred_model) setModel(res.data.preferred_model);
         if (res.data.favorite_city) setCity(res.data.favorite_city);
-      }
-      const statsRes = await axios.get(`${API}/public/stats`);
-      if (statsRes.data) {
-        setStats(statsRes.data);
       }
     } catch (err) {
       console.error("Failed to load settings", err);
@@ -72,8 +67,7 @@ export default function Settings() {
           <p>Retrieving configuration rules...</p>
         </div>
       ) : (
-        <>
-          <div className="settings-card glass">
+        <div className="settings-card glass">
           <h3>Preferences Manager</h3>
 
           <div className="settings-form">
@@ -94,6 +88,7 @@ export default function Settings() {
                 ))}
               </select>
             </div>
+
             <div className="settings-item">
               <label>Default City Location</label>
               <p className="settings-item-desc">
@@ -149,8 +144,6 @@ export default function Settings() {
             </button>
           </div>
         </div>
-
-        </>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./Search.css";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 export default function Search({ setPage, setMessages }) {
   const [query, setQuery] = useState("");

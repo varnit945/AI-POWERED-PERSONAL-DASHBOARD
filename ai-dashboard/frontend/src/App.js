@@ -85,7 +85,6 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [taskLists, setTaskLists] = useState([]);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // ---------------- Pomodoro Global Background Timer State ----------------
   const [pomoMode, setPomoMode] = useState("focus");
@@ -95,10 +94,8 @@ export default function App() {
   const [pomoCustomBreak, setPomoCustomBreak] = useState(5);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      if (Notification.permission === "default") {
-        Notification.requestPermission();
-      }
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
     }
   }, []);
 
@@ -140,7 +137,7 @@ export default function App() {
     setPomoIsRunning(false);
     playAlarmSound();
     
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+    if (Notification.permission === "granted") {
       new Notification(
         pomoMode === "focus" ? "💪 Focus Session Finished!" : "☕ Break Over!",
         {
@@ -189,7 +186,6 @@ export default function App() {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pomoIsRunning, pomoMode, pomoCustomFocus, pomoCustomBreak]);
 
   const handleLogout = () => {
@@ -251,40 +247,18 @@ export default function App() {
 
   
   return (
-    <div className={`app-shell ${isSidebarOpen ? "sidebar-open" : ""}`}>
+    <div className="app-shell">
       {theme === "dark" && <StarfieldBackground />}
       <SparkleTrailCursor />
 
-      {/* Mobile Top Bar */}
-      <div className="mobile-top-bar glass">
-        <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
-          ☰
-        </button>
-        <div className="mobile-brand">AI SaaS</div>
-        <div style={{ width: "32px" }} />
-      </div>
-
-      {/* Sidebar Backdrop Overlay */}
-      {isSidebarOpen && (
-        <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)} />
-      )}
-
-      <Sidebar
-        page={page}
-        setPage={(newPage) => {
-          setPage(newPage);
-          setIsSidebarOpen(false);
-        }}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        handleLogout={() => {
-          handleLogout();
-          setIsSidebarOpen(false);
-        }}
-        user={user}
-        isOpen={isSidebarOpen}
-        setIsOpen={setIsSidebarOpen}
-      />
+    <Sidebar
+      page={page}
+      setPage={setPage}
+      theme={theme}
+      toggleTheme={toggleTheme}
+      handleLogout={handleLogout}
+      user={user}
+    />
 
     <div className="main-content">
       <div className="page-transition" key={page}>

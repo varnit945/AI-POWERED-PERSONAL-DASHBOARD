@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import axios from "axios";
 import "./ResumeAnalyzer.css";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 export default function ResumeAnalyzer() {
   const [file, setFile] = useState(null);

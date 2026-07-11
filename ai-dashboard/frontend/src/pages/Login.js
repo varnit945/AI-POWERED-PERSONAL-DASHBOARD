@@ -3,7 +3,7 @@ import axios from "axios";
 import "./Login.css";
 import BackgroundAnimation from "../components/BackgroundAnimation";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 export default function Login({ onLoginSuccess, switchToRegister }) {
   // Core login state
@@ -20,30 +20,6 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
   const [fpStep, setFpStep] = useState("request"); // "request" | "reset"
   const [fpMessage, setFpMessage] = useState("");
   const [fpError, setFpError] = useState("");
-  
-  // Public community metrics state
-  const [stats, setStats] = useState(null);
-  const [statsError, setStatsError] = useState(false);
-
-  React.useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get(`${API}/public/stats`);
-        if (res.data && !res.data.error) {
-          setStats(res.data);
-          setStatsError(false);
-        } else if (res.data.error) {
-          setStatsError(true);
-        }
-      } catch (err) {
-        setStatsError(true);
-        console.error("Failed to load public stats", err);
-      }
-    };
-    fetchStats();
-    const interval = setInterval(fetchStats, 15000); // poll every 15s for live feel
-    return () => clearInterval(interval);
-  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -166,12 +142,6 @@ export default function Login({ onLoginSuccess, switchToRegister }) {
           <p className="auth-switch">
             Don't have an account? <button className="auth-link-inline" onClick={switchToRegister}>Register</button>
           </p>
-          <div style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)", textAlign: "center" }}>
-            {statsError || !stats
-              ? <span style={{ color: "#f87171" }}>⚠️ Server offline — stats unavailable</span>
-              : <>👥 {stats.total_users} members registered · 🟢 {stats.online_users} online now</>
-            }
-          </div>
         </div>
       </div>
     </>

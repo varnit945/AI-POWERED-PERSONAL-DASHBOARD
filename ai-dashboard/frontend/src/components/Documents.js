@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "./Documents.css";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 export default function Documents() {
   const [documents, setDocuments] = useState([]);
@@ -21,7 +21,6 @@ export default function Documents() {
 
   useEffect(() => {
     loadDocuments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

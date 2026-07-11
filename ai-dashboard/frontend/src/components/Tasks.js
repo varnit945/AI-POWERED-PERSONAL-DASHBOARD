@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./Tasks.css";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 export default function Tasks({ taskLists, setTaskLists }) {
   const [goal, setGoal] = useState("");
@@ -10,7 +10,6 @@ export default function Tasks({ taskLists, setTaskLists }) {
 
   useEffect(() => {
     loadTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadTasks = async () => {

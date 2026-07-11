@@ -18,12 +18,6 @@
   --font-mono: 'IBM Plex Mono', monospace;
   --blur: blur(18px);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-
-  /* Sidebar Sizing Variables */
-  --sidebar-width: 230px;
-  --sidebar-font-size: 14.5px;
-  --sidebar-brand-size: 18px;
-  --sidebar-padding: 24px 16px;
 }
 
 [data-theme="light"] {
@@ -58,7 +52,7 @@ button, input {
 
 .app-shell {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background: transparent;
   position: relative;
   overflow: hidden;
@@ -67,8 +61,11 @@ button, input {
 
 .main-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   padding: 36px 44px;
   min-width: 0;
+  overflow: hidden;
   position: relative;
   z-index: 1;
 }
@@ -80,6 +77,9 @@ button, input {
 
 .page-transition {
   animation: page-in 0.3s ease;
+  flex: 1;       /* grow to fill main-content */
+  min-height: 0; /* allow flex children to shrink below natural height */
+  overflow: hidden;
 }
 
 @keyframes page-in {
@@ -229,13 +229,7 @@ button, input {
   100% { background-position: 0% 50%; }
 }
 
-/* Ensure the main content takes up remaining space */
-.main-content {
-  flex: 1;
-  padding: 40px; /* Adjust padding to your preference */
-  height: 100vh;
-  overflow-y: auto; /* Allows internal scrolling if content is long */
-}
+/* (duplicate .main-content rule removed — see definition above) */
 
 /* Glass effect for content */
 .glass {
@@ -251,98 +245,4 @@ button, input {
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-/* Mobile Top Bar */
-.mobile-top-bar {
-  display: none;
-  width: 100%;
-  height: 60px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
-  border-top: none;
-}
-
-.mobile-menu-btn {
-  background: none;
-  border: none;
-  color: var(--text);
-  font-size: 24px;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mobile-brand {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* Sidebar Backdrop Overlay */
-.sidebar-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1002;
-  animation: fade-in 0.2s ease;
-  cursor: pointer; /* Crucial for iOS click/touch events on passive divs */
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Responsive Media Queries */
-@media (max-width: 768px) {
-  .app-shell {
-    flex-direction: column;
-    padding-top: 60px; /* Leave space for top bar */
-  }
-
-  .app-container {
-    flex-direction: column;
-    padding-top: 60px;
-  }
-
-  .mobile-top-bar {
-    display: flex;
-  }
-
-  .main-content {
-    padding: 20px 16px;
-    height: calc(100vh - 60px);
-  }
-
-  /* Global Grid/Flex stack overrides on mobile */
-  .dash-grid, 
-  .widgets-grid, 
-  .code-assistant-grid, 
-  .study-hub-grid, 
-  .interview-grid,
-  .dashboard-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Force elements that have flex layouts to stack vertically */
-  .flex-responsive {
-    flex-direction: column !important;
-  }
 }

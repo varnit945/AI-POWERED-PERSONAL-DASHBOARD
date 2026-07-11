@@ -3,7 +3,7 @@ import axios from "axios";
 import "./Dashboard.css";
 import { detectLocation } from "../utils/geo";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 const DraggableCard = ({ title, desc, icon, onClick, onDragStart, onDragOver, onDrop }) => {
   return (
@@ -51,7 +51,6 @@ const Dashboard = ({ messages = [], taskLists = [], setPage, user, pomoMode, pom
     if (user) {
       loadWidgetOrder();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchDashboardBriefing = async () => {

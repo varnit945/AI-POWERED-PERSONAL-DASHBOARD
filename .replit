@@ -1,5 +1,5 @@
-run = "PYTHONPATH=./deps python3 main.py"
+run = "PYTHONPATH=./deps python3 ai-dashboard/backend/main.py"
 
 [deployment]
-build = "pip install --upgrade pip && pip install --target=./deps -r requirements.txt"
-run = "PYTHONPATH=./deps python3 main.py"
+build = "pip install --upgrade pip && pip install --target=./deps -r ai-dashboard/backend/requirements.txt"
+run = "PYTHONPATH=./deps python3 ai-dashboard/backend/main.py"

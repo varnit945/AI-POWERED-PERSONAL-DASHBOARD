@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./CodeAssistant.css";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 const LANGUAGES = ["Python", "JavaScript", "React", "Java", "C++", "SQL"];
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./Notes.css";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 const CATEGORIES = ["General", "Work", "Study", "Personal", "Meeting"];
 
@@ -24,7 +24,6 @@ export default function Notes() {
 
   useEffect(() => {
     loadNotes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadNotes = async () => {

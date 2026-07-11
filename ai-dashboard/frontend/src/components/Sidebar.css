@@ -1,5 +1,5 @@
 .sidebar {
-  width: var(--sidebar-width);
+  width: 230px;
   min-height: 100vh;
   border-radius: 0;
   border-right: 1px solid var(--border);
@@ -7,18 +7,16 @@
   border-bottom: none;
   border-left: none;
   box-shadow: none;
-  padding: var(--sidebar-padding);
+  padding: 24px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   position: relative;
-  animation: none !important;
-  opacity: 1 !important;
 }
 
 .sidebar-brand {
   font-family: var(--font-display);
-  font-size: var(--sidebar-brand-size);
+  font-size: 18px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -52,7 +50,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--text-muted);
-  font-size: var(--sidebar-font-size);
+  font-size: 14.5px;
   text-align: left;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
@@ -127,64 +125,4 @@
 
 .theme-toggle-thumb.light {
   transform: translateX(14px);
-}
-
-/* Mobile close button (hidden on desktop) */
-.sidebar-close-btn {
-  display: none;
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 16px;
-  cursor: pointer;
-  z-index: 1015;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, transform 0.15s ease;
-}
-
-.sidebar-close-btn:active {
-  transform: scale(0.92);
-  background: rgba(255, 255, 255, 0.18);
-}
-
-/* Sidebar Responsive Overrides */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: var(--sidebar-width);
-    height: 100vh;
-    height: 100dvh; /* dynamic viewport height for iPhone Safari */
-    z-index: 1005;
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    background: var(--surface-solid);
-    /* Make sidebar scrollable so logout is always reachable */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    /* Extra bottom padding for iPhone home indicator */
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .sidebar-close-btn {
-    display: flex !important;
-  }
-  
-  .nav-btn.active::before {
-    left: -16px;
-  }
 }

@@ -247,70 +247,10 @@ class EditMessageRequest(BaseModel):
     new_prompt: str
 
 
-def check_image_generation(prompt: str, rows: list = []) -> str | None:
-    prompt_lower = prompt.lower().strip()
-    
-    triggers = [
-        "generate image", "generate an image", "create image", "create an image",
-        "generate photo", "generate a photo", "create photo", "create a photo",
-        "draw an image", "draw a photo", "draw a picture", "draw",
-        "generate picture", "generate a picture", "create picture", "create a picture",
-        "make an image", "make a photo", "make a picture", "generate wallpaper",
-        "create wallpaper", "edit image", "edit the image", "edit photo",
-        "edit the photo", "change image", "change photo", "modify image", "modify photo"
-    ]
-    
-    is_trigger = False
-    clean_prompt = prompt
-    
-    for t in triggers:
-        if t in prompt_lower:
-            is_trigger = True
-            idx = prompt_lower.find(t)
-            extracted = prompt[idx + len(t):].strip()
-            for filler in [":", " of a ", " of an ", " of ", " about ", " showing ", " containing ", " with ", " to be a ", " to be ", " to show ", " to ", " a ", " an "]:
-                if extracted.lower().startswith(filler):
-                    extracted = extracted[len(filler):].strip()
-                    break
-            if extracted:
-                clean_prompt = extracted
-            break
-            
-    # Check if there is an image in session history
-    has_image_in_history = False
-    last_image_prompt = ""
-    for r in rows:
-        content = r["content"]
-        if "![Image]" in content or "Attached file" in content or "User attached an image" in content or "📎" in content:
-            has_image_in_history = True
-            if 'Here is the generated image for **"' in content:
-                start = content.find('Here is the generated image for **"')
-                if start != -1:
-                    start += len('Here is the generated image for **"')
-                    end = content.find('"', start)
-                    if end != -1:
-                        last_image_prompt = content[start:end]
-
-    # If there is an image in history, check if user is asking to edit/modify/add
-    edit_keywords = ["add", "remove", "change", "make", "edit", "delete", "put", "insert", "with", "show", "be", "color", "background", "replace", "incorporate", "painting", "drawing"]
-    is_edit_command = False
-    if has_image_in_history:
-        if len(prompt_lower.split()) <= 6 or any(kw in prompt_lower for kw in edit_keywords):
-            is_edit_command = True
-            
-    if is_trigger or is_edit_command:
-        import urllib.parse
-        if is_edit_command:
-            if last_image_prompt:
-                clean_prompt = f"{last_image_prompt}, {prompt}"
-            else:
-                clean_prompt = f"photo edited to {prompt}"
-                
-        encoded = urllib.parse.quote(clean_prompt)
-        image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&nologo=true"
-        return f"Here is the generated image for **\"{clean_prompt}\"**:\n\n![Image]({image_url})"
-        
-    return None
+# ---------------- HOME ----------------
+@app.get("/")
+def home():
+    return {"message": "AI Dashboard Running 🚀"}
 
 
 # ---------------- CHAT (with memory + history) ----------------
@@ -358,13 +298,10 @@ def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
 
     pref_model = get_user_model(conn, current_user["id"])
     
-    # Intercept image generation prompts
-    ai_text = check_image_generation(req.prompt, rows[:-1])
+    # Check for ATS request first
+    ai_text = handle_ats_check(req.prompt, rows, pref_model, current_user["id"])
     if ai_text is None:
-        # Check for ATS request first
-        ai_text = handle_ats_check(req.prompt, rows, pref_model, current_user["id"])
-        if ai_text is None:
-            history = build_history(rows)
+        history = build_history(rows)
         # 4. Call the model
         try:
             ai_text = ask_groq(history, model=pref_model, user_id=current_user["id"])
@@ -419,13 +356,10 @@ def regenerate(req: RegenerateRequest, current_user: dict = Depends(get_current_
 
     pref_model = get_user_model(conn, current_user["id"])
     
-    # Intercept image generation prompts
-    ai_text = check_image_generation(last_user_prompt, remaining_rows[:-1])
+    # Check for ATS request first
+    ai_text = handle_ats_check(last_user_prompt, remaining_rows, pref_model, current_user["id"])
     if ai_text is None:
-        # Check for ATS request first
-        ai_text = handle_ats_check(last_user_prompt, remaining_rows, pref_model, current_user["id"])
-        if ai_text is None:
-            history = build_history(remaining_rows)
+        history = build_history(remaining_rows)
         try:
             ai_text = ask_groq(history, model=pref_model, user_id=current_user["id"])
         except Exception:
@@ -483,13 +417,10 @@ def edit_last(req: EditMessageRequest, current_user: dict = Depends(get_current_
 
     pref_model = get_user_model(conn, current_user["id"])
     
-    # Intercept image generation prompts
-    ai_text = check_image_generation(req.new_prompt, history_rows[:-1])
+    # Check for ATS request first
+    ai_text = handle_ats_check(req.new_prompt, history_rows, pref_model, current_user["id"])
     if ai_text is None:
-        # Check for ATS request first
-        ai_text = handle_ats_check(req.new_prompt, history_rows, pref_model, current_user["id"])
-        if ai_text is None:
-            history = build_history(history_rows)
+        history = build_history(history_rows)
         try:
             ai_text = ask_groq(history, model=pref_model, user_id=current_user["id"])
         except Exception:

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./HabitTracker.css";
 
-import API from "../config";
+const API = "http://127.0.0.1:8000";
 
 const DEFAULT_HABITS = ["Study", "Exercise", "Meditation", "Reading", "Water", "Sleep", "Coding"];
 
@@ -153,6 +153,7 @@ export default function HabitTracker() {
           {habits.map((h) => {
             const currentStreak = calculateStreak(h.completedDates);
             const totalCompletions = h.completedDates.length;
+            const isCompletedToday = h.completedDates.includes(formatDateStr(new Date()));
 
             return (
               <div key={h.id} className="habit-card glass">

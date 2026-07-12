@@ -79,7 +79,8 @@ button, input {
   animation: page-in 0.3s ease;
   flex: 1;       /* grow to fill main-content */
   min-height: 0; /* allow flex children to shrink below natural height */
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @keyframes page-in {

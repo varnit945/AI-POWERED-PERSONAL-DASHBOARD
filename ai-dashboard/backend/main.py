@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-import sqlite3
 import json
 import uuid
 import requests
@@ -44,56 +43,8 @@ NEWS_CACHE_DURATION = 900     # 15 minutes
 weather_cache = {}  # key: (city, country), value: (timestamp, data)
 news_cache = {"timestamp": 0, "data": None}
 
-# ---------------- DB SETUP ----------------
-DB_PATH = "chat_history.db"
-
-
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    try:
-        conn.execute("PRAGMA journal_mode=WAL;")
-        conn.execute("PRAGMA synchronous=NORMAL;")
-    except Exception:
-        pass
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def init_db():
-    conn = get_db()
-    cursor = conn.cursor()
-    # Check if sessions table has user_id column
-    try:
-        cursor.execute("SELECT user_id FROM sessions LIMIT 1")
-    except sqlite3.OperationalError:
-        cursor.execute("DROP TABLE IF EXISTS messages")
-        cursor.execute("DROP TABLE IF EXISTS sessions")
-        conn.commit()
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS sessions (
-            id TEXT PRIMARY KEY,
-            user_id TEXT,
-            title TEXT DEFAULT 'New Chat',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (session_id) REFERENCES sessions (id)
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-
-init_db()
+# ---------------- SUPABASE IMPORT ----------------
+from auth import supabase
 
 def get_system_prompt():
     now_utc = datetime.now(timezone.utc)
@@ -122,11 +73,12 @@ def build_history(rows):
     return history
 
 
-def get_user_model(conn, user_id):
+def get_user_model(*args, **kwargs):
+    user_id = args[-1] if args else kwargs.get("user_id")
     try:
-        row = conn.execute("SELECT preferred_model FROM user_settings WHERE user_id = ?", (user_id,)).fetchone()
-        if row and row["preferred_model"]:
-            model = row["preferred_model"]
+        res = supabase.table("user_settings").select("preferred_model").eq("user_id", user_id).execute()
+        if res.data and res.data[0].get("preferred_model"):
+            model = res.data[0]["preferred_model"]
             decommissioned_map = {
                 "llama3-8b-8192": "llama-3.1-8b-instant",
                 "llama3-70b-8192": "llama-3.3-70b-versatile",
@@ -256,66 +208,51 @@ def home():
 # ---------------- CHAT (with memory + history) ----------------
 @app.post("/chat")
 def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-
     # 1. Get or create session
     session_id = req.session_id
     if not session_id:
         session_id = str(uuid.uuid4())
-        conn.execute(
-            "INSERT INTO sessions (id, user_id, title) VALUES (?, ?, ?)",
-            (session_id, current_user["id"], req.prompt[:40])
-        )
-        conn.commit()
+        supabase.table("sessions").insert({
+            "id": session_id,
+            "user_id": current_user["id"],
+            "title": req.prompt[:40]
+        }).execute()
     else:
-        exists = conn.execute(
-            "SELECT id FROM sessions WHERE id = ? AND user_id = ?", (session_id, current_user["id"])
-        ).fetchone()
-        if not exists:
-            conn.execute(
-                "INSERT INTO sessions (id, user_id, title) VALUES (?, ?, ?)",
-                (session_id, current_user["id"], req.prompt[:40])
-            )
-            conn.commit()
+        res = supabase.table("sessions").select("id").eq("id", session_id).eq("user_id", current_user["id"]).execute()
+        if not res.data:
+            supabase.table("sessions").insert({
+                "id": session_id,
+                "user_id": current_user["id"],
+                "title": req.prompt[:40]
+            }).execute()
 
     # 2. Save the user's message
-    conn.execute(
-        "INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)",
-        (session_id, "user", req.prompt)
-    )
-    conn.commit()
+    supabase.table("messages").insert({
+        "session_id": session_id,
+        "role": "user",
+        "content": req.prompt
+    }).execute()
 
-    # 3. Load full history for this session (this is what gives the AI memory)
-    rows = conn.execute(
-        """
-        SELECT role, content FROM messages 
-        JOIN sessions ON messages.session_id = sessions.id
-        WHERE session_id = ? AND sessions.user_id = ?
-        ORDER BY messages.id ASC
-        """,
-        (session_id, current_user["id"])
-    ).fetchall()
+    # 3. Load full history for this session
+    res = supabase.table("messages").select("role, content").eq("session_id", session_id).order("id").execute()
+    rows = res.data
 
-    pref_model = get_user_model(conn, current_user["id"])
+    pref_model = get_user_model(current_user["id"])
     
-    # Check for ATS request first
     ai_text = handle_ats_check(req.prompt, rows, pref_model, current_user["id"])
     if ai_text is None:
         history = build_history(rows)
-        # 4. Call the model
         try:
             ai_text = ask_groq(history, model=pref_model, user_id=current_user["id"])
         except Exception:
-            conn.close()
             raise HTTPException(status_code=502, detail="AI service is unreachable right now.")
 
     # 5. Save AI reply
-    conn.execute(
-        "INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)",
-        (session_id, "ai", ai_text)
-    )
-    conn.commit()
-    conn.close()
+    supabase.table("messages").insert({
+        "session_id": session_id,
+        "role": "ai",
+        "content": ai_text
+    }).execute()
 
     return {"response": ai_text, "session_id": session_id}
 
@@ -323,55 +260,36 @@ def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
 # ---------------- REGENERATE LAST AI RESPONSE ----------------
 @app.post("/chat/regenerate")
 def regenerate(req: RegenerateRequest, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-
-    # Verify session ownership
-    session = conn.execute(
-        "SELECT id FROM sessions WHERE id = ? AND user_id = ?", (req.session_id, current_user["id"])
-    ).fetchone()
-    if not session:
-        conn.close()
+    session = supabase.table("sessions").select("id").eq("id", req.session_id).eq("user_id", current_user["id"]).execute()
+    if not session.data:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    rows = conn.execute(
-        "SELECT id, role, content FROM messages WHERE session_id = ? ORDER BY id ASC",
-        (req.session_id,)
-    ).fetchall()
+    res = supabase.table("messages").select("id, role, content").eq("session_id", req.session_id).order("id").execute()
+    rows = res.data
 
     if not rows or rows[-1]["role"] != "ai":
-        conn.close()
         raise HTTPException(status_code=400, detail="No AI response to regenerate.")
 
-    # Delete the last AI message from DB
-    conn.execute("DELETE FROM messages WHERE id = ?", (rows[-1]["id"],))
-    conn.commit()
+    supabase.table("messages").delete().eq("id", rows[-1]["id"]).execute()
     
     remaining_rows = rows[:-1]
-    
-    last_user_prompt = ""
-    for r in reversed(remaining_rows):
-        if r["role"] == "user":
-            last_user_prompt = r["content"]
-            break
+    last_user_prompt = next((r["content"] for r in reversed(remaining_rows) if r["role"] == "user"), "")
 
-    pref_model = get_user_model(conn, current_user["id"])
+    pref_model = get_user_model(current_user["id"])
     
-    # Check for ATS request first
     ai_text = handle_ats_check(last_user_prompt, remaining_rows, pref_model, current_user["id"])
     if ai_text is None:
         history = build_history(remaining_rows)
         try:
             ai_text = ask_groq(history, model=pref_model, user_id=current_user["id"])
         except Exception:
-            conn.close()
             raise HTTPException(status_code=502, detail="AI service is unreachable right now.")
 
-    conn.execute(
-        "INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)",
-        (req.session_id, "ai", ai_text)
-    )
-    conn.commit()
-    conn.close()
+    supabase.table("messages").insert({
+        "session_id": req.session_id,
+        "role": "ai",
+        "content": ai_text
+    }).execute()
 
     return {"response": ai_text}
 
@@ -379,60 +297,43 @@ def regenerate(req: RegenerateRequest, current_user: dict = Depends(get_current_
 # ---------------- EDIT LAST USER MESSAGE + RE-RUN ----------------
 @app.post("/chat/edit-last")
 def edit_last(req: EditMessageRequest, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-
-    # Verify session ownership
-    session = conn.execute(
-        "SELECT id FROM sessions WHERE id = ? AND user_id = ?", (req.session_id, current_user["id"])
-    ).fetchone()
-    if not session:
-        conn.close()
+    session = supabase.table("sessions").select("id").eq("id", req.session_id).eq("user_id", current_user["id"]).execute()
+    if not session.data:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    rows = conn.execute(
-        "SELECT id, role FROM messages WHERE session_id = ? ORDER BY id ASC",
-        (req.session_id,)
-    ).fetchall()
+    res = supabase.table("messages").select("id, role").eq("session_id", req.session_id).order("id").execute()
+    rows = res.data
 
     if len(rows) < 2 or rows[-1]["role"] != "ai" or rows[-2]["role"] != "user":
-        conn.close()
         raise HTTPException(status_code=400, detail="No user/AI pair to edit.")
 
-    # Delete last AI + last user message
-    conn.execute("DELETE FROM messages WHERE id IN (?, ?)", (rows[-1]["id"], rows[-2]["id"]))
-    conn.commit()
+    # Supabase allows delete with IN, but simpler to do it twice or range since we have the IDs
+    supabase.table("messages").delete().in_("id", [rows[-1]["id"], rows[-2]["id"]]).execute()
 
-    # Insert the new edited user message
-    conn.execute(
-        "INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)",
-        (req.session_id, "user", req.new_prompt)
-    )
-    conn.commit()
+    supabase.table("messages").insert({
+        "session_id": req.session_id,
+        "role": "user",
+        "content": req.new_prompt
+    }).execute()
 
-    # Rebuild history and get fresh AI reply
-    history_rows = conn.execute(
-        "SELECT role, content FROM messages WHERE session_id = ? ORDER BY id ASC",
-        (req.session_id,)
-    ).fetchall()
+    res = supabase.table("messages").select("role, content").eq("session_id", req.session_id).order("id").execute()
+    history_rows = res.data
 
-    pref_model = get_user_model(conn, current_user["id"])
+    pref_model = get_user_model(current_user["id"])
     
-    # Check for ATS request first
     ai_text = handle_ats_check(req.new_prompt, history_rows, pref_model, current_user["id"])
     if ai_text is None:
         history = build_history(history_rows)
         try:
             ai_text = ask_groq(history, model=pref_model, user_id=current_user["id"])
         except Exception:
-            conn.close()
             raise HTTPException(status_code=502, detail="AI service is unreachable right now.")
 
-    conn.execute(
-        "INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)",
-        (req.session_id, "ai", ai_text)
-    )
-    conn.commit()
-    conn.close()
+    supabase.table("messages").insert({
+        "session_id": req.session_id,
+        "role": "ai",
+        "content": ai_text
+    }).execute()
 
     return {"response": ai_text}
 
@@ -440,66 +341,55 @@ def edit_last(req: EditMessageRequest, current_user: dict = Depends(get_current_
 # ---------------- SESSIONS API ----------------
 @app.get("/sessions")
 def list_sessions(current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT id, title, created_at FROM sessions WHERE user_id = ? ORDER BY created_at DESC",
-        (current_user["id"],)
-    ).fetchall()
-    conn.close()
-    return {"sessions": [dict(r) for r in rows]}
+    res = supabase.table("sessions").select("id, title, created_at").eq("user_id", current_user["id"]).order("created_at", desc=True).execute()
+    return {"sessions": res.data}
 
 
 @app.get("/sessions/search")
 def search_sessions(q: str, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    rows = conn.execute(
-        """
-        SELECT DISTINCT s.id, s.title, s.created_at
-        FROM sessions s
-        JOIN messages m ON m.session_id = s.id
-        WHERE s.user_id = ? AND (s.title LIKE ? OR m.content LIKE ?)
-        ORDER BY s.created_at DESC
-        """,
-        (current_user["id"], f"%{q}%", f"%{q}%")
-    ).fetchall()
-    conn.close()
-    return {"sessions": [dict(r) for r in rows]}
+    # With Supabase, cross-table OR search is best done with an RPC, but we can do it in two queries
+    res_sess = supabase.table("sessions").select("id, title, created_at").eq("user_id", current_user["id"]).ilike("title", f"%{q}%").execute()
+    
+    # Get all user sessions
+    all_sess = supabase.table("sessions").select("id").eq("user_id", current_user["id"]).execute()
+    sess_ids = [s["id"] for s in all_sess.data]
+    
+    res_msg = {"data": []}
+    if sess_ids:
+        res_msg = supabase.table("messages").select("session_id").in_("session_id", sess_ids).ilike("content", f"%{q}%").execute()
+        
+    msg_sess_ids = {m["session_id"] for m in res_msg.data}
+    
+    res_final = supabase.table("sessions").select("id, title, created_at").eq("user_id", current_user["id"]).order("created_at", desc=True).execute()
+    
+    matched = []
+    for s in res_final.data:
+        if s["id"] in msg_sess_ids or q.lower() in s.get("title", "").lower():
+            matched.append(s)
+            
+    return {"sessions": matched}
 
 
 @app.get("/sessions/{session_id}/messages")
 def get_session_messages(session_id: str, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    # Verify session ownership
-    session = conn.execute(
-        "SELECT id FROM sessions WHERE id = ? AND user_id = ?", (session_id, current_user["id"])
-    ).fetchone()
-    if not session:
-        conn.close()
+    session = supabase.table("sessions").select("id").eq("id", session_id).eq("user_id", current_user["id"]).execute()
+    if not session.data:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    rows = conn.execute(
-        "SELECT role, content, created_at FROM messages WHERE session_id = ? ORDER BY id ASC",
-        (session_id,)
-    ).fetchall()
-    conn.close()
-    return {"messages": [dict(r) for r in rows]}
+    res = supabase.table("messages").select("role, content, created_at").eq("session_id", session_id).order("id").execute()
+    return {"messages": res.data}
 
 
 @app.delete("/sessions/{session_id}")
 def delete_session(session_id: str, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    # Verify session ownership
-    session = conn.execute(
-        "SELECT id FROM sessions WHERE id = ? AND user_id = ?", (session_id, current_user["id"])
-    ).fetchone()
-    if not session:
-        conn.close()
+    session = supabase.table("sessions").select("id").eq("id", session_id).eq("user_id", current_user["id"]).execute()
+    if not session.data:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
-    conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
-    conn.commit()
-    conn.close()
+    # Supabase cascade delete is configured in the schema, but we can do it explicitly
+    supabase.table("messages").delete().eq("session_id", session_id).execute()
+    supabase.table("sessions").delete().eq("id", session_id).execute()
+    
     return {"status": "deleted"}
 
 
@@ -867,89 +757,64 @@ class NoteAIRequest(BaseModel):
 
 @app.get("/notes")
 def list_notes(current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT id, title, content, category, created_at, updated_at FROM notes WHERE user_id = ? ORDER BY updated_at DESC",
-        (current_user["id"],)
-    ).fetchall()
-    conn.close()
-    return {"notes": [dict(r) for r in rows]}
+    res = supabase.table("notes").select("id, title, content, category, created_at, updated_at").eq("user_id", current_user["id"]).order("updated_at", desc=True).execute()
+    return {"notes": res.data}
 
 
 @app.post("/notes")
 def create_note(req: NoteCreate, current_user: dict = Depends(get_current_user)):
     note_id = str(uuid.uuid4())
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO notes (id, user_id, title, content, category) VALUES (?, ?, ?, ?, ?)",
-        (note_id, current_user["id"], req.title, req.content, req.category)
-    )
-    conn.commit()
-    conn.close()
+    supabase.table("notes").insert({
+        "id": note_id,
+        "user_id": current_user["id"],
+        "title": req.title,
+        "content": req.content,
+        "category": req.category
+    }).execute()
     return {"id": note_id, "status": "created"}
 
 
 @app.put("/notes/{note_id}")
 def update_note(note_id: str, req: NoteUpdate, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    exists = conn.execute("SELECT 1 FROM notes WHERE id = ? AND user_id = ?", (note_id, current_user["id"])).fetchone()
-    if not exists:
-        conn.close()
+    exists = supabase.table("notes").select("id").eq("id", note_id).eq("user_id", current_user["id"]).execute()
+    if not exists.data:
         raise HTTPException(status_code=404, detail="Note not found")
         
-    updates = []
-    params = []
+    update_data = {}
     for field, val in req.model_dump(exclude_unset=True).items():
         if val is not None:
-            updates.append(f"{field} = ?")
-            params.append(val)
+            update_data[field] = val
             
-    if updates:
-        updates.append("updated_at = CURRENT_TIMESTAMP")
-        params.append(note_id)
-        params.append(current_user["id"])
-        conn.execute(
-            f"UPDATE notes SET {', '.join(updates)} WHERE id = ? AND user_id = ?",
-            tuple(params)
-        )
-        conn.commit()
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        supabase.table("notes").update(update_data).eq("id", note_id).eq("user_id", current_user["id"]).execute()
         
-    conn.close()
     return {"status": "updated"}
 
 
 @app.delete("/notes/{note_id}")
 def delete_note(note_id: str, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    exists = conn.execute("SELECT 1 FROM notes WHERE id = ? AND user_id = ?", (note_id, current_user["id"])).fetchone()
-    if not exists:
-        conn.close()
+    exists = supabase.table("notes").select("id").eq("id", note_id).eq("user_id", current_user["id"]).execute()
+    if not exists.data:
         raise HTTPException(status_code=404, detail="Note not found")
         
-    conn.execute("DELETE FROM notes WHERE id = ? AND user_id = ?", (note_id, current_user["id"]))
-    conn.commit()
-    conn.close()
+    supabase.table("notes").delete().eq("id", note_id).eq("user_id", current_user["id"]).execute()
     return {"status": "deleted"}
 
 
 @app.post("/notes/{note_id}/ai")
 def note_ai_action(note_id: str, req: NoteAIRequest, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    
     if req.content is not None and req.title is not None:
         title = req.title
         content = req.content
     else:
-        note = conn.execute(
-            "SELECT title, content FROM notes WHERE id = ? AND user_id = ?", (note_id, current_user["id"])
-        ).fetchone()
+        note = supabase.table("notes").select("title, content").eq("id", note_id).eq("user_id", current_user["id"]).execute()
         
-        if not note:
-            conn.close()
+        if not note.data:
             raise HTTPException(status_code=404, detail="Note not found")
             
-        content = note["content"]
-        title = note["title"]
+        content = note.data[0]["content"]
+        title = note.data[0]["title"]
     
     if req.action == "summarize":
         system_prompt = "You are an expert AI summarizer. Provide a summary of the text below. Make it structured, clear, and concise."
@@ -973,11 +838,9 @@ def note_ai_action(note_id: str, req: NoteAIRequest, current_user: dict = Depend
         system_prompt = "Convert the unstructured notes or transcript below into structured professional meeting minutes (Attendees, Date, Discussion, Key Decisions, Next Steps)."
         user_prompt = f"Create meeting minutes for this note:\n\n{content}"
     else:
-        conn.close()
         raise HTTPException(status_code=400, detail="Invalid AI action requested")
 
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
     
     try:
         res = get_user_client(current_user["id"]).chat.completions.create(
@@ -1015,56 +878,42 @@ async def upload_document(
         raise HTTPException(status_code=422, detail="Extracted text is empty or file type unsupported.")
         
     doc_id = str(uuid.uuid4())
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO documents (id, user_id, filename, content_type, extracted_text) VALUES (?, ?, ?, ?, ?)",
-        (doc_id, current_user["id"], filename, content_type, extracted_text)
-    )
-    conn.commit()
-    conn.close()
+    supabase.table("documents").insert({
+        "id": doc_id,
+        "user_id": current_user["id"],
+        "filename": filename,
+        "content_type": content_type,
+        "extracted_text": extracted_text
+    }).execute()
     
     return {"id": doc_id, "filename": filename, "status": "uploaded"}
 
 
 @app.get("/documents")
 def list_documents(current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT id, filename, content_type, created_at FROM documents WHERE user_id = ? ORDER BY created_at DESC",
-        (current_user["id"],)
-    ).fetchall()
-    conn.close()
-    return {"documents": [dict(r) for r in rows]}
+    res = supabase.table("documents").select("id, filename, content_type, created_at").eq("user_id", current_user["id"]).order("created_at", desc=True).execute()
+    return {"documents": res.data}
 
 
 @app.delete("/documents/{doc_id}")
 def delete_document(doc_id: str, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    exists = conn.execute("SELECT 1 FROM documents WHERE id = ? AND user_id = ?", (doc_id, current_user["id"])).fetchone()
-    if not exists:
-        conn.close()
+    exists = supabase.table("documents").select("id").eq("id", doc_id).eq("user_id", current_user["id"]).execute()
+    if not exists.data:
         raise HTTPException(status_code=404, detail="Document not found")
         
-    conn.execute("DELETE FROM documents WHERE id = ? AND user_id = ?", (doc_id, current_user["id"]))
-    conn.commit()
-    conn.close()
+    supabase.table("documents").delete().eq("id", doc_id).eq("user_id", current_user["id"]).execute()
     return {"status": "deleted"}
 
 
 @app.post("/documents/{doc_id}/chat")
 def chat_with_document(doc_id: str, req: DocChatRequest, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    doc = conn.execute(
-        "SELECT filename, extracted_text FROM documents WHERE id = ? AND user_id = ?",
-        (doc_id, current_user["id"])
-    ).fetchone()
+    doc = supabase.table("documents").select("filename, extracted_text").eq("id", doc_id).eq("user_id", current_user["id"]).execute()
     
-    if not doc:
-        conn.close()
+    if not doc.data:
         raise HTTPException(status_code=404, detail="Document not found")
         
-    extracted_text = doc["extracted_text"]
-    filename = doc["filename"]
+    extracted_text = doc.data[0]["extracted_text"]
+    filename = doc.data[0]["filename"]
     
     truncated_context = extracted_text[:80000]
     
@@ -1076,8 +925,7 @@ def chat_with_document(doc_id: str, req: DocChatRequest, current_user: dict = De
         f"--- DOCUMENT START ---\n{truncated_context}\n--- DOCUMENT END ---"
     )
     
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
     
     try:
         res = get_user_client(current_user["id"]).chat.completions.create(
@@ -1098,35 +946,32 @@ def federated_search(q: str, current_user: dict = Depends(get_current_user)):
     if not q.strip():
         return {"notes": [], "documents": [], "chats": []}
         
-    conn = get_db()
     like_query = f"%{q}%"
+    user_id = current_user["id"]
     
-    notes_rows = conn.execute(
-        "SELECT id, title, content, category FROM notes WHERE user_id = ? AND (title LIKE ? OR content LIKE ?)",
-        (current_user["id"], like_query, like_query)
-    ).fetchall()
+    notes_res = supabase.table("notes").select("id, title, content, category").eq("user_id", user_id).or_(f"title.ilike.{like_query},content.ilike.{like_query}").execute()
+    docs_res = supabase.table("documents").select("id, filename, content_type").eq("user_id", user_id).or_(f"filename.ilike.{like_query},extracted_text.ilike.{like_query}").execute()
     
-    docs_rows = conn.execute(
-        "SELECT id, filename, content_type FROM documents WHERE user_id = ? AND (filename LIKE ? OR extracted_text LIKE ?)",
-        (current_user["id"], like_query, like_query)
-    ).fetchall()
+    all_sess = supabase.table("sessions").select("id").eq("user_id", user_id).execute()
+    sess_ids = [s["id"] for s in all_sess.data]
     
-    chats_rows = conn.execute(
-        """
-        SELECT DISTINCT s.id, s.title, s.created_at
-        FROM sessions s
-        JOIN messages m ON m.session_id = s.id
-        WHERE s.user_id = ? AND (s.title LIKE ? OR m.content LIKE ?)
-        """,
-        (current_user["id"], like_query, like_query)
-    ).fetchall()
+    res_msg = {"data": []}
+    if sess_ids:
+        res_msg = supabase.table("messages").select("session_id").in_("session_id", sess_ids).ilike("content", like_query).execute()
+        
+    msg_sess_ids = {m["session_id"] for m in res_msg.data}
     
-    conn.close()
+    res_final = supabase.table("sessions").select("id, title, created_at").eq("user_id", user_id).execute()
     
+    matched_chats = []
+    for s in res_final.data:
+        if s["id"] in msg_sess_ids or q.lower() in s.get("title", "").lower():
+            matched_chats.append(s)
+            
     return {
-        "notes": [dict(r) for r in notes_rows],
-        "documents": [dict(r) for r in docs_rows],
-        "chats": [dict(r) for r in chats_rows]
+        "notes": notes_res.data,
+        "documents": docs_res.data,
+        "chats": matched_chats
     }
 
 
@@ -1155,83 +1000,66 @@ class HabitToggle(BaseModel):
 # --- TASKS ENDPOINTS ---
 @app.get("/tasks")
 def list_tasks(current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    lists = conn.execute(
-        "SELECT id, goal, created_at FROM task_lists WHERE user_id = ? ORDER BY created_at DESC",
-        (current_user["id"],)
-    ).fetchall()
+    lists_res = supabase.table("task_lists").select("id, goal, created_at").eq("user_id", current_user["id"]).order("created_at", desc=True).execute()
     
     result = []
-    for l in lists:
-        items = conn.execute(
-            "SELECT id, text, done FROM task_items WHERE list_id = ?",
-            (l["id"],)
-        ).fetchall()
+    for l in lists_res.data:
+        items_res = supabase.table("task_items").select("id, text, done").eq("list_id", l["id"]).execute()
         result.append({
             "id": l["id"],
             "goal": l["goal"],
             "createdAt": l["created_at"],
-            "tasks": [{"id": i["id"], "text": i["text"], "done": bool(i["done"])} for i in items]
+            "tasks": [{"id": i["id"], "text": i["text"], "done": bool(i["done"])} for i in items_res.data]
         })
         
-    conn.close()
     return {"taskLists": result}
 
 
 @app.post("/tasks")
 def save_task_list(req: TaskListCreate, current_user: dict = Depends(get_current_user)):
     list_id = str(uuid.uuid4())
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO task_lists (id, user_id, goal) VALUES (?, ?, ?)",
-        (list_id, current_user["id"], req.goal)
-    )
-    for t in req.tasks:
-        item_id = str(uuid.uuid4())
-        conn.execute(
-            "INSERT INTO task_items (id, list_id, text, done) VALUES (?, ?, ?, 0)",
-            (item_id, list_id, t.text)
-        )
-    conn.commit()
-    conn.close()
+    supabase.table("task_lists").insert({
+        "id": list_id,
+        "user_id": current_user["id"],
+        "goal": req.goal
+    }).execute()
+    
+    if req.tasks:
+        items_to_insert = [{
+            "id": str(uuid.uuid4()),
+            "list_id": list_id,
+            "text": t.text,
+            "done": 0
+        } for t in req.tasks]
+        supabase.table("task_items").insert(items_to_insert).execute()
+        
     return {"id": list_id, "status": "saved"}
 
 
 @app.post("/tasks/toggle/{item_id}")
 def toggle_task_item(item_id: str, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    item = conn.execute(
-        """
-        SELECT ti.id, ti.done FROM task_items ti
-        JOIN task_lists tl ON ti.list_id = tl.id
-        WHERE ti.id = ? AND tl.user_id = ?
-        """,
-        (item_id, current_user["id"])
-    ).fetchone()
-    
-    if not item:
-        conn.close()
+    item_res = supabase.table("task_items").select("id, done, list_id").eq("id", item_id).execute()
+    if not item_res.data:
+        raise HTTPException(status_code=404, detail="Task item not found")
+        
+    item = item_res.data[0]
+    list_res = supabase.table("task_lists").select("id").eq("id", item["list_id"]).eq("user_id", current_user["id"]).execute()
+    if not list_res.data:
         raise HTTPException(status_code=404, detail="Task item not found")
         
     new_done = 0 if item["done"] else 1
-    conn.execute("UPDATE task_items SET done = ? WHERE id = ?", (new_done, item_id))
-    conn.commit()
-    conn.close()
+    supabase.table("task_items").update({"done": new_done}).eq("id", item_id).execute()
     return {"status": "toggled", "done": bool(new_done)}
 
 
 @app.delete("/tasks/list/{list_id}")
 def delete_task_list(list_id: str, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    exists = conn.execute("SELECT 1 FROM task_lists WHERE id = ? AND user_id = ?", (list_id, current_user["id"])).fetchone()
-    if not exists:
-        conn.close()
+    exists = supabase.table("task_lists").select("id").eq("id", list_id).eq("user_id", current_user["id"]).execute()
+    if not exists.data:
         raise HTTPException(status_code=404, detail="Task list not found")
         
-    conn.execute("DELETE FROM task_items WHERE list_id = ?", (list_id,))
-    conn.execute("DELETE FROM task_lists WHERE id = ? AND user_id = ?", (list_id, current_user["id"]))
-    conn.commit()
-    conn.close()
+    supabase.table("task_items").delete().eq("list_id", list_id).execute()
+    supabase.table("task_lists").delete().eq("id", list_id).eq("user_id", current_user["id"]).execute()
     return {"status": "deleted"}
 
 
@@ -1239,37 +1067,31 @@ def delete_task_list(list_id: str, current_user: dict = Depends(get_current_user
 @app.post("/pomodoro/sessions")
 def record_pomodoro(req: PomodoroCreate, current_user: dict = Depends(get_current_user)):
     session_id = str(uuid.uuid4())
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO pomodoro_sessions (id, user_id, duration_minutes) VALUES (?, ?, ?)",
-        (session_id, current_user["id"], req.duration_minutes)
-    )
-    conn.commit()
-    conn.close()
+    supabase.table("pomodoro_sessions").insert({
+        "id": session_id,
+        "user_id": current_user["id"],
+        "duration_minutes": req.duration_minutes
+    }).execute()
     return {"status": "recorded", "id": session_id}
 
 
 @app.get("/pomodoro/stats")
 def get_pomodoro_stats(current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    today = datetime.now().strftime("%Y-%m-%d")
-    today_rows = conn.execute(
-        "SELECT duration_minutes FROM pomodoro_sessions WHERE user_id = ? AND date(completed_at) = date(?)",
-        (current_user["id"], today)
-    ).fetchall()
+    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_start = f"{today_date}T00:00:00Z"
+    
+    today_res = supabase.table("pomodoro_sessions").select("duration_minutes").eq("user_id", current_user["id"]).gte("completed_at", today_start).execute()
+    today_rows = today_res.data
     
     total_today = sum(r["duration_minutes"] for r in today_rows)
     sessions_today = len(today_rows)
     
-    all_time = conn.execute(
-        "SELECT COUNT(*), SUM(duration_minutes) FROM pomodoro_sessions WHERE user_id = ?",
-        (current_user["id"],)
-    ).fetchone()
+    all_time_res = supabase.table("pomodoro_sessions").select("duration_minutes").eq("user_id", current_user["id"]).execute()
+    all_time_rows = all_time_res.data
     
-    total_sessions = all_time[0] or 0
-    total_minutes = all_time[1] or 0
+    total_sessions = len(all_time_rows)
+    total_minutes = sum(r["duration_minutes"] for r in all_time_rows)
     
-    conn.close()
     return {
         "todayFocusMinutes": total_today,
         "todaySessions": sessions_today,
@@ -1281,96 +1103,74 @@ def get_pomodoro_stats(current_user: dict = Depends(get_current_user)):
 # --- HABITS ENDPOINTS ---
 @app.get("/habits")
 def list_habits(current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT id, name, created_at FROM habits WHERE user_id = ? ORDER BY created_at ASC",
-        (current_user["id"],)
-    ).fetchall()
+    res = supabase.table("habits").select("id, name, created_at").eq("user_id", current_user["id"]).order("created_at").execute()
+    habits = res.data
     
     result = []
-    for r in rows:
-        logs = conn.execute(
-            "SELECT completed_date FROM habit_logs WHERE habit_id = ? ORDER BY completed_date ASC",
-            (r["id"],)
-        ).fetchall()
+    for h in habits:
+        logs_res = supabase.table("habit_logs").select("completed_date").eq("habit_id", h["id"]).order("completed_date").execute()
         result.append({
-            "id": r["id"],
-            "name": r["name"],
-            "completedDates": [l["completed_date"] for l in logs]
+            "id": h["id"],
+            "name": h["name"],
+            "completedDates": [l["completed_date"] for l in logs_res.data]
         })
         
-    conn.close()
     return {"habits": result}
 
 
 @app.post("/habits")
 def create_habit(req: HabitCreate, current_user: dict = Depends(get_current_user)):
     habit_id = str(uuid.uuid4())
-    conn = get_db()
     try:
-        conn.execute(
-            "INSERT INTO habits (id, user_id, name) VALUES (?, ?, ?)",
-            (habit_id, current_user["id"], req.name)
-        )
-        conn.commit()
-    except sqlite3.IntegrityError:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Habit with this name already exists")
-    conn.close()
+        supabase.table("habits").insert({
+            "id": habit_id,
+            "user_id": current_user["id"],
+            "name": req.name
+        }).execute()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Habit with this name already exists or database error")
     return {"id": habit_id, "name": req.name, "status": "created"}
 
 
 @app.delete("/habits/{habit_id}")
 def delete_habit(habit_id: str, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    exists = conn.execute("SELECT 1 FROM habits WHERE id = ? AND user_id = ?", (habit_id, current_user["id"])).fetchone()
-    if not exists:
-        conn.close()
+    exists = supabase.table("habits").select("id").eq("id", habit_id).eq("user_id", current_user["id"]).execute()
+    if not exists.data:
         raise HTTPException(status_code=404, detail="Habit not found")
         
-    conn.execute("DELETE FROM habit_logs WHERE habit_id = ?", (habit_id,))
-    conn.execute("DELETE FROM habits WHERE id = ? AND user_id = ?", (habit_id, current_user["id"]))
-    conn.commit()
-    conn.close()
+    supabase.table("habit_logs").delete().eq("habit_id", habit_id).execute()
+    supabase.table("habits").delete().eq("id", habit_id).eq("user_id", current_user["id"]).execute()
     return {"status": "deleted"}
 
 
 @app.post("/habits/{habit_id}/toggle")
 def toggle_habit_date(habit_id: str, req: HabitToggle, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
-    habit = conn.execute("SELECT 1 FROM habits WHERE id = ? AND user_id = ?", (habit_id, current_user["id"])).fetchone()
-    if not habit:
-        conn.close()
+    habit = supabase.table("habits").select("id").eq("id", habit_id).eq("user_id", current_user["id"]).execute()
+    if not habit.data:
         raise HTTPException(status_code=404, detail="Habit not found")
         
-    log = conn.execute(
-        "SELECT id FROM habit_logs WHERE habit_id = ? AND completed_date = ?",
-        (habit_id, req.date)
-    ).fetchone()
+    log = supabase.table("habit_logs").select("id").eq("habit_id", habit_id).eq("completed_date", req.date).execute()
     
-    if log:
-        conn.execute("DELETE FROM habit_logs WHERE id = ?", (log["id"],))
+    if log.data:
+        supabase.table("habit_logs").delete().eq("id", log.data[0]["id"]).execute()
         status = "toggled_off"
     else:
-        conn.execute(
-            "INSERT INTO habit_logs (habit_id, completed_date) VALUES (?, ?)",
-            (habit_id, req.date)
-        )
+        supabase.table("habit_logs").insert({
+            "habit_id": habit_id,
+            "completed_date": req.date
+        }).execute()
         status = "toggled_on"
         
-    conn.commit()
-    conn.close()
     return {"status": status}
 
 
 # --- AI DAILY BRIEFING ---
 @app.get("/daily-briefing")
 def get_daily_briefing(hour: int | None = None, local_time: str | None = None, current_user: dict = Depends(get_current_user)):
-    conn = get_db()
     city = "Mumbai"
-    pref = conn.execute("SELECT favorite_city FROM user_settings WHERE user_id = ?", (current_user["id"],)).fetchone()
-    if pref and pref["favorite_city"]:
-        city = pref["favorite_city"]
+    pref = supabase.table("user_settings").select("favorite_city").eq("user_id", current_user["id"]).execute()
+    if pref.data and pref.data[0].get("favorite_city"):
+        city = pref.data[0]["favorite_city"]
         
     weather_info = "Weather: N/A"
     try:
@@ -1464,8 +1264,7 @@ def get_daily_briefing(hour: int | None = None, local_time: str | None = None, c
             "- Close with a peaceful reflection or night quote."
         )
     
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
     
     try:
         res = get_user_client(current_user["id"]).chat.completions.create(
@@ -1518,9 +1317,7 @@ async def analyze_resume(
         f"Resume text:\n{text[:60000]}"
     )
     
-    conn = get_db()
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
     
     try:
         res = get_user_client(current_user["id"]).chat.completions.create(
@@ -1598,9 +1395,7 @@ def generate_flashcards(req: StudyRequest, current_user: dict = Depends(get_curr
     all_cards = []
     excludes = list(req.exclude_questions or [])
 
-    conn = get_db()
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
 
     system_content = (
         "You are an expert academic professor and grading evaluator. "
@@ -1691,9 +1486,7 @@ def generate_quiz(req: StudyRequest, current_user: dict = Depends(get_current_us
     all_questions = []
     excludes = list(req.exclude_questions or [])
     
-    conn = get_db()
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
     
     import re
     max_loops = (num_q + batch_size - 1) // batch_size + 2
@@ -1785,9 +1578,7 @@ def generate_interview_questions(req: InterviewRequest, current_user: dict = Dep
         "]"
     )
     
-    conn = get_db()
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
     
     try:
         res = get_user_client(current_user["id"]).chat.completions.create(
@@ -1837,9 +1628,7 @@ def evaluate_interview_answer(req: AnswerSubmission, current_user: dict = Depend
         "}"
     )
     
-    conn = get_db()
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
     
     try:
         res = get_user_client(current_user["id"]).chat.completions.create(
@@ -1897,9 +1686,7 @@ def code_assistant_utility(req: CodeAssistRequest, current_user: dict = Depends(
     else:
         raise HTTPException(status_code=400, detail="Invalid action requested")
 
-    conn = get_db()
-    pref_model = get_user_model(conn, current_user["id"])
-    conn.close()
+    pref_model = get_user_model(current_user["id"])
     
     try:
         res = get_user_client(current_user["id"]).chat.completions.create(

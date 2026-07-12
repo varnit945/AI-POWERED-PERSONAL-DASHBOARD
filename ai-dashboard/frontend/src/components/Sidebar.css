@@ -1,6 +1,6 @@
 .sidebar {
   width: 230px;
-  min-height: 100vh;
+  height: 100vh;
   border-radius: 0;
   border-right: 1px solid var(--border);
   border-top: none;
@@ -12,6 +12,8 @@
   flex-direction: column;
   gap: 4px;
   position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar-brand {

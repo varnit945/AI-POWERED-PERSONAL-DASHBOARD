@@ -153,7 +153,7 @@ export default function HabitTracker() {
           {habits.map((h) => {
             const currentStreak = calculateStreak(h.completedDates);
             const totalCompletions = h.completedDates.length;
-            const isCompletedToday = h.completedDates.includes(formatDateStr(new Date()));
+
 
             return (
               <div key={h.id} className="habit-card glass">

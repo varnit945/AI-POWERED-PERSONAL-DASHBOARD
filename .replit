@@ -1,6 +1,6 @@
-build = "python3 -m pip install --upgrade pip && pip install -r requirements.txt"
-run = "cd ai-dashboard/backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8080"
+build = "cd ai-dashboard/backend && python3 -m pip install -r requirements.txt --index-url https://pypi.org/simple/"
+run = "cd ai-dashboard/backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8000"
 
 [deployment]
-build = "python3 -m pip install --upgrade pip && pip install -r requirements.txt"
-run = "cd ai-dashboard/backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8080"
+build = "cd ai-dashboard/backend && python3 -m pip install -r requirements.txt --index-url https://pypi.org/simple/"
+run = "cd ai-dashboard/backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8000"

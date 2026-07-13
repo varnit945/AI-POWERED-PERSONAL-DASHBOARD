@@ -9,7 +9,7 @@ import requests
 import feedparser
 import time
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 import io
 import pypdf
@@ -98,8 +98,8 @@ def get_user_model(*args, **kwargs):
     except Exception:
         pass
         
-    user_model_cache[user_id] = (now, "llama-3.3-70b-versatile")
-    return "llama-3.3-70b-versatile"
+        user_model_cache[user_id] = (now, "llama-3.1-8b-instant")
+        return "llama-3.1-8b-instant"
 
 
 def get_user_client(user_id: str):
@@ -217,9 +217,18 @@ def home():
     return {"message": "AI Dashboard Running 🚀"}
 
 
+def save_chat_messages(session_id: str, prompt: str, ai_text: str):
+    try:
+        supabase.table("messages").insert([
+            {"session_id": session_id, "role": "user", "content": prompt},
+            {"session_id": session_id, "role": "ai", "content": ai_text}
+        ]).execute()
+    except Exception as e:
+        print(f"Failed to save messages: {e}")
+
 # ---------------- CHAT (with memory + history) ----------------
 @app.post("/chat")
-def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
+def chat(req: ChatRequest, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     # 1. Get or create session
     session_id = req.session_id
     if not session_id:
@@ -238,16 +247,12 @@ def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
                 "title": req.prompt[:40]
             }).execute()
 
-    # 2. Save the user's message
-    supabase.table("messages").insert({
-        "session_id": session_id,
-        "role": "user",
-        "content": req.prompt
-    }).execute()
-
-    # 3. Load full history for this session
+    # 2. Load existing history (before user's current message)
     res = supabase.table("messages").select("role, content").eq("session_id", session_id).order("id").execute()
-    rows = res.data
+    rows = res.data or []
+    
+    # 3. Add user's current message to the rows array so ATS check & History build sees it
+    rows.append({"role": "user", "content": req.prompt})
 
     pref_model = get_user_model(current_user["id"])
     
@@ -259,12 +264,8 @@ def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
         except Exception:
             raise HTTPException(status_code=502, detail="AI service is unreachable right now.")
 
-    # 5. Save AI reply
-    supabase.table("messages").insert({
-        "session_id": session_id,
-        "role": "ai",
-        "content": ai_text
-    }).execute()
+    # 4. Save both User and AI messages in the background
+    background_tasks.add_task(save_chat_messages, session_id, req.prompt, ai_text)
 
     return {"response": ai_text, "session_id": session_id}
 

@@ -42,6 +42,8 @@ NEWS_CACHE_DURATION = 900     # 15 minutes
 
 weather_cache = {}  # key: (city, country), value: (timestamp, data)
 news_cache = {"timestamp": 0, "data": None}
+briefing_cache = {} # key: user_id, value: (timestamp, data)
+user_model_cache = {} # key: user_id, value: (timestamp, model_name)
 
 # ---------------- SUPABASE IMPORT ----------------
 from auth import supabase
@@ -75,6 +77,12 @@ def build_history(rows):
 
 def get_user_model(*args, **kwargs):
     user_id = args[-1] if args else kwargs.get("user_id")
+    now = time.time()
+    if user_id in user_model_cache:
+        ts, model = user_model_cache[user_id]
+        if now - ts < 300:
+            return model
+            
     try:
         res = supabase.table("user_settings").select("preferred_model").eq("user_id", user_id).execute()
         if res.data and res.data[0].get("preferred_model"):
@@ -84,9 +92,13 @@ def get_user_model(*args, **kwargs):
                 "llama3-70b-8192": "llama-3.3-70b-versatile",
                 "mixtral-8x7b-32768": "llama-3.1-8b-instant",
             }
-            return decommissioned_map.get(model, model)
+            final_model = decommissioned_map.get(model, model)
+            user_model_cache[user_id] = (now, final_model)
+            return final_model
     except Exception:
         pass
+        
+    user_model_cache[user_id] = (now, "llama-3.3-70b-versatile")
     return "llama-3.3-70b-versatile"
 
 
@@ -1167,6 +1179,13 @@ def toggle_habit_date(habit_id: str, req: HabitToggle, current_user: dict = Depe
 # --- AI DAILY BRIEFING ---
 @app.get("/daily-briefing")
 def get_daily_briefing(hour: int | None = None, local_time: str | None = None, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    now = time.time()
+    if user_id in briefing_cache:
+        ts, data = briefing_cache[user_id]
+        if now - ts < 600:
+            return data
+
     city = "Mumbai"
     pref = supabase.table("user_settings").select("favorite_city").eq("user_id", current_user["id"]).execute()
     if pref.data and pref.data[0].get("favorite_city"):
@@ -1274,7 +1293,9 @@ def get_daily_briefing(hour: int | None = None, local_time: str | None = None, c
                 {"role": "user", "content": prompt}
             ]
         )
-        return {"briefing": res.choices[0].message.content}
+        result = {"briefing": res.choices[0].message.content}
+        briefing_cache[user_id] = (now, result)
+        return result
     except Exception:
         raise HTTPException(status_code=502, detail="Briefing service is currently busy.")
 

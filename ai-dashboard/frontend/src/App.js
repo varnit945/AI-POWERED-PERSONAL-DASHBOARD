@@ -25,6 +25,34 @@ import StarfieldBackground from "./components/StarfieldBackground";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
+// ---------------- Global API Caching for "Instant" Navigation ----------------
+const originalGet = axios.get;
+const originalPost = axios.post;
+const originalPut = axios.put;
+const originalDelete = axios.delete;
+
+const apiCache = new Map();
+
+axios.get = async (url, config) => {
+  const cacheKey = url + JSON.stringify(config?.params || {});
+  if (apiCache.has(cacheKey)) {
+    const { data, timestamp } = apiCache.get(cacheKey);
+    // 60-second global memory cache for lightning-fast tab switching
+    if (Date.now() - timestamp < 60000) {
+       return Promise.resolve({ data, status: 200, statusText: 'OK', cached: true });
+    }
+  }
+  const response = await originalGet.call(axios, url, config);
+  apiCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+  return response;
+};
+
+const clearCache = () => apiCache.clear();
+
+axios.post = async (...args) => { clearCache(); return originalPost.call(axios, ...args); };
+axios.put = async (...args) => { clearCache(); return originalPut.call(axios, ...args); };
+axios.delete = async (...args) => { clearCache(); return originalDelete.call(axios, ...args); };
+
 // Configure Axios interceptor for JWT Auth & backend API URL replacement
 axios.interceptors.request.use(
   (config) => {

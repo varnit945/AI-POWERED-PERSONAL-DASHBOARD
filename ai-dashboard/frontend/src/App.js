@@ -122,8 +122,14 @@ export default function App() {
   const [pomoCustomBreak, setPomoCustomBreak] = useState(5);
 
   useEffect(() => {
-    if (Notification.permission === "default") {
-      Notification.requestPermission();
+    if ("Notification" in window && window.Notification) {
+      if (Notification.permission === "default") {
+        try {
+          Notification.requestPermission();
+        } catch (e) {
+          console.error("Notification permission request failed", e);
+        }
+      }
     }
   }, []);
 
@@ -165,14 +171,18 @@ export default function App() {
     setPomoIsRunning(false);
     playAlarmSound();
     
-    if (Notification.permission === "granted") {
-      new Notification(
-        pomoMode === "focus" ? "💪 Focus Session Finished!" : "☕ Break Over!",
-        {
-          body: pomoMode === "focus" ? "Great job! Time to take a short break." : "Ready to get back to work?",
-          icon: "/logo.png"
-        }
-      );
+    if ("Notification" in window && window.Notification && Notification.permission === "granted") {
+      try {
+        new Notification(
+          pomoMode === "focus" ? "💪 Focus Session Finished!" : "☕ Break Over!",
+          {
+            body: pomoMode === "focus" ? "Great job! Time to take a short break." : "Ready to get back to work?",
+            icon: "/logo.png"
+          }
+        );
+      } catch (e) {
+        console.error("Failed to show notification", e);
+      }
     }
 
     if (pomoMode === "focus") {

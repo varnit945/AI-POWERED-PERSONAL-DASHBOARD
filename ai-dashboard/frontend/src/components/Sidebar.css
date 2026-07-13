@@ -128,3 +128,45 @@
 .theme-toggle-thumb.light {
   transform: translateX(14px);
 }
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: auto;
+    flex-direction: row;
+    padding: 10px;
+    z-index: 1000;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: var(--surface);
+    backdrop-filter: var(--blur);
+    border-right: none;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-brand {
+    display: none;
+  }
+  .nav-group {
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+  }
+  .nav-btn {
+    flex-direction: column;
+    padding: 8px 12px;
+    font-size: 11px;
+    white-space: nowrap;
+    gap: 4px;
+  }
+  .nav-btn::before {
+    display: none;
+  }
+  .nav-btn.active {
+    background: var(--surface-hover);
+  }
+  .theme-toggle {
+    display: none;
+  }
+}

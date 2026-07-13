@@ -172,3 +172,13 @@
   width: 100%;
   margin-top: 5px;
 }
+
+@media (max-width: 768px) {
+  .pomo-grid {
+    grid-template-columns: 1fr;
+  }
+  .timer-card {
+    min-height: auto;
+    padding: 30px 20px;
+  }
+}

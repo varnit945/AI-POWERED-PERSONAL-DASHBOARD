@@ -340,3 +340,23 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+@media (max-width: 768px) {
+  .notes-page-wrapper {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+  .notes-list-panel {
+    width: 100%;
+    max-height: 40vh;
+  }
+  .note-editor-panel {
+    width: 100%;
+    min-height: 50vh;
+  }
+  .ai-modal-card {
+    width: 90%;
+    max-width: 400px;
+  }
+}

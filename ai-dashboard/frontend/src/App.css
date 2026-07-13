@@ -263,3 +263,13 @@ button, input {
     padding: 20px;
   }
 }
+
+html, body {
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+}
+input, textarea, select {
+  font-size: 16px !important;
+}
+
